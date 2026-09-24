@@ -92,7 +92,7 @@ main() {
   year="$(date -u +%Y)"
   month="$((10#$(date -u +%m)))"
 
-  local org_json http_code
+  local http_code
   http_code="$(curl -sS -o /tmp/grtf-org.json -w '%{http_code}' \
     -H "Authorization: Bearer ${token}" \
     -H "Accept: application/vnd.github+json" \
