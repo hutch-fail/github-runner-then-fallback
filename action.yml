@@ -1,0 +1,71 @@
+# Prefer GitHub-hosted runners while included Actions minutes remain, then fall back.
+#
+# Attribution: the determine-runner job → runs-on: ${{ fromJson(...) }} workflow
+# shape matches mikehardy/runner-fallback-action. This is a new action with a
+# quota/billing predicate — not a label-swap fork of that project.
+name: GitHub Runner Then Fallback
+description: >-
+  Prefer GitHub-hosted runners while included Actions minutes remain; otherwise
+  emit a fallback runner label (e.g. Blacksmith).
+author: hutch-fail
+branding:
+  icon: activity
+  color: blue
+
+inputs:
+  primary-runner:
+    description: >-
+      Comma-separated labels for the primary runner while under included minutes
+      (e.g. ubuntu-latest or ubuntu-24.04).
+    required: true
+  fallback-runner:
+    description: >-
+      Comma-separated labels for the fallback runner when included minutes are
+      exhausted (e.g. blacksmith-2vcpu-ubuntu-2404).
+    required: true
+  included-minutes:
+    description: >-
+      Included/free Actions Linux minutes budget for the current billing period.
+      Compare against org usage; not returned by the billing API. Consumers
+      typically pass vars.ACTIONS_INCLUDED_MINUTES (Free org default: 2000).
+    required: true
+  github-token:
+    description: >-
+      Token that can read org enhanced billing usage (classic PAT with admin:org,
+      or fine-grained token with Organization Administration read). GITHUB_TOKEN
+      is not sufficient.
+    required: true
+  organization:
+    description: >-
+      Organization login whose Actions usage is checked. Defaults to the owner
+      of GITHUB_REPOSITORY when unset.
+    required: false
+    default: ""
+  fallback-on-error:
+    description: >-
+      If true, emit the fallback runner when the billing check fails (bad token,
+      API error, etc.) instead of failing the step.
+    required: false
+    default: "true"
+
+outputs:
+  use-runner:
+    description: >-
+      JSON string of runner labels for runs-on: ${{ fromJson(...) }}, same shape
+      as mikehardy/runner-fallback-action (e.g. ["ubuntu-latest"]).
+    value: ${{ steps.decide.outputs.use-runner }}
+
+runs:
+  using: composite
+  steps:
+    - name: Decide primary vs fallback runner
+      id: decide
+      shell: bash
+      env:
+        INPUT_PRIMARY_RUNNER: ${{ inputs.primary-runner }}
+        INPUT_FALLBACK_RUNNER: ${{ inputs.fallback-runner }}
+        INPUT_INCLUDED_MINUTES: ${{ inputs.included-minutes }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_ORGANIZATION: ${{ inputs.organization }}
+        INPUT_FALLBACK_ON_ERROR: ${{ inputs.fallback-on-error }}
+      run: bash "${{ github.action_path }}/scripts/decide.sh"
