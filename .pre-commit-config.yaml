@@ -1,6 +1,14 @@
 # Pin only — suite owned by hutch-fail/pre-commit (id: platform).
 repos:
   - repo: https://github.com/hutch-fail/pre-commit
-    rev: v0.1.4
+    rev: v0.1.5
     hooks:
       - id: platform
+
+  - repo: local
+    hooks:
+      - id: evals-pre-commit
+        name: evals — apply scoped bars for changed paths
+        entry: bash evals/scripts/pre-commit-evals.sh
+        language: system
+        pass_filenames: true
