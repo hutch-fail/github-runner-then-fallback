@@ -100,7 +100,37 @@ jobs:
 
 ## This repository’s CI
 
-**Blacksmith-only.** This repo does **not** dogfood the prefer-GHA path (avoids burning free minutes and recursive `determine-runner` while shipping the action).
+**Blacksmith-only** for local test CI (`ci.yml`). This repo does **not** dogfood the
+prefer-GHA path (avoids burning free minutes and recursive `determine-runner`
+while shipping the action).
+
+### Release
+
+Same thin caller as other `hutch-fail` repos — do not copy the implementation:
+
+```yaml
+# .github/workflows/release.yml
+jobs:
+  release:
+    uses: hutch-fail/actions/.github/workflows/semantic-release.yml@v1.0.2
+```
+
+Push conventional commits to `main` (or `workflow_dispatch`) → GitHub Release tags
+(`vX.Y.Z`). Prefer consuming pins like `@v1` / `@v1.0.2` over hand-rolled tags.
+
+### Pre-commit
+
+Org suite from [`hutch-fail/pre-commit`](https://github.com/hutch-fail/pre-commit)
+(`id: platform`). After clone:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+PR CI: thin `.github/workflows/pre-commit.yml` →
+`hutch-fail/pre-commit/.github/workflows/pre-commit.yml@v0.1.4` (needs org
+`GH_APP_ID` / `GH_APP_PRIVATE_KEY` secrets, same as other platform repos).
 
 ## License
 
