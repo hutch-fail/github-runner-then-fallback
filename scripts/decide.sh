@@ -58,8 +58,17 @@ fail_or_fallback() {
 main() {
   local primary="${INPUT_PRIMARY_RUNNER:?primary-runner is required}"
   local fallback="${INPUT_FALLBACK_RUNNER:?fallback-runner is required}"
-  local included_raw="${INPUT_INCLUDED_MINUTES:?included-minutes is required}"
-  local token="${INPUT_GITHUB_TOKEN:?github-token is required}"
+  local included_raw="${INPUT_INCLUDED_MINUTES:-}"
+  local token="${INPUT_GITHUB_TOKEN:-}"
+
+  # Missing budget/token is common before org secrets/vars are set; prefer
+  # fallback-on-error over hard-failing the composite step.
+  if [[ -z "$included_raw" ]]; then
+    fail_or_fallback "included-minutes is empty (set vars.ACTIONS_INCLUDED_MINUTES or the input)"
+  fi
+  if [[ -z "$token" ]]; then
+    fail_or_fallback "github-token is empty (pass secrets.ORG_BILLING_TOKEN or equivalent)"
+  fi
 
   if ! [[ "$included_raw" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
     fail_or_fallback "included-minutes must be a non-negative number; got: ${included_raw}"
