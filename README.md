@@ -29,7 +29,9 @@ This action:
 2. If `used < included-minutes` → emit **primary** (`ubuntu-latest`, …)
 3. Else → emit **fallback** (`blacksmith-…`)
 
-Token needs org billing read (`admin:org` on a classic PAT, or fine-grained **Organization administration: read**). Default `GITHUB_TOKEN` is **not** enough.
+Token must be a **classic** PAT owned by an org owner or billing manager, with
+`admin:org`. Enhanced billing **usage** APIs do **not** support fine-grained
+PATs. Default `GITHUB_TOKEN` is **not** enough.
 
 ## Pin
 

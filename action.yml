@@ -1,6 +1,6 @@
 # Prefer GitHub-hosted runners while included Actions minutes remain, then fall back.
 #
-# Attribution: the determine-runner job → runs-on: ${{ fromJson(...) }} workflow
+# Attribution: the determine-runner job → runs-on fromJson(use-runner) workflow
 # shape matches mikehardy/runner-fallback-action. This is a new action with a
 # quota/billing predicate — not a label-swap fork of that project.
 name: GitHub Runner Then Fallback
@@ -51,8 +51,8 @@ inputs:
 outputs:
   use-runner:
     description: >-
-      JSON string of runner labels for runs-on: ${{ fromJson(...) }}, same shape
-      as mikehardy/runner-fallback-action (e.g. ["ubuntu-latest"]).
+      JSON string of runner labels for workflow runs-on via fromJson of this
+      output (same shape as mikehardy/runner-fallback-action, e.g. ["ubuntu-latest"]).
     value: ${{ steps.decide.outputs.use-runner }}
 
 runs:
