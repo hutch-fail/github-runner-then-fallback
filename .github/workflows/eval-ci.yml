@@ -21,9 +21,10 @@ concurrency:
 jobs:
   eval-ci:
     if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
-    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@4beb346643e2d174815c4893d1cdecc65b0b36cf
+    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@09f916e0cced76400b5476f493a1dc0ab020a010
     with:
       evals_path: evals
-      hub_ref: 4beb346643e2d174815c4893d1cdecc65b0b36cf
+      hub_ref: 09f916e0cced76400b5476f493a1dc0ab020a010
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
