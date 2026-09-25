@@ -27,3 +27,4 @@ jobs:
       hub_ref: 4beb346643e2d174815c4893d1cdecc65b0b36cf
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
