@@ -95,6 +95,35 @@ EVALS_ROOT=/path/to/evals bash evals/harness/goal.sh assert-red …
 Author from `evals/templates/goal.md` before the run. Never weaken checks to
 force green.
 
+## Outcome vs check (soft)
+
+Harness green means the **written criteria** passed — not every sentence under
+User outcome. Prefer that meaningful outcome bullets either map to a Success
+criteria row (observable) or sit honestly under Limitations / Scope “Not
+covered.” Ambient README hope (“local login form works”) without either is easy
+to misread as proven.
+
+When a pack asserts one environment enables a mode (e.g. Boat trusted-header
+SSO), consider whether the opposite mode matters for the claim (e.g. local
+without that mode). A sibling criterion or an explicit Limitations line is
+usually enough; not every dual-mode needs a second pack.
+
+### Live proof levels (soft)
+
+Ad-hoc live curls in a PR test plan are outside harness judge. When you do live
+V&V, prefer matching the level to the outcome you care about — not only the
+cheapest green:
+
+| Level | Roughly | Example |
+| --- | --- | --- |
+| L0 | Process listens / document GET | `curl` → HTTP 200 HTML |
+| L1 | Product mode / config shape | API or inspect shows auth mode, feature flags |
+| L2 | Interactive path | Signup/login or equivalent happy path |
+
+“UI loads” for an auth-gated surface often wants at least L1. L0 alone is fine
+when the claim is truly “something answers on that Host.” Avoid treating L0 as
+Done for outcomes that need a mode or session unless Limitations says so.
+
 ## Skills
 
 Use hub skills: `goal-author` → `goal-develop`|`goal-solve` → `goal-judge`,

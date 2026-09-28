@@ -92,6 +92,27 @@ make eval/assert-red GOAL=github.com/<slug>/<repo>/YYYYMMDD-<kebab>
 7. If the claim should persist with the product: promote into that repo’s tracked
    `evals/` (follow that project’s naming/docs) before closeout.
 
+## Outcome vs check (prefer, not rigid)
+
+Before assert-red, skim User outcome against Success criteria and Limitations:
+
+- Prefer each **meaningful** outcome bullet maps to an observable criterion **or**
+  sits under Limitations / Scope “Not covered.”
+- Ambient claims (“login form works locally”) without either tend to produce
+  false greens (e.g. HTML 200 while auth mode is wrong).
+- Aspirational color in User outcome is fine; avoid treating it as Done unless
+  something checks it or Limitations owns the gap.
+
+When a criterion asserts a mode is **enabled** in one environment (Boat Access,
+trusted headers, etc.), consider whether the product claim also needs the
+opposite (local / unset → mode off). Prefer a sibling row or an honest
+Limitations line — not a second pack for every dual-mode. Skip when the goal’s
+Decision already excludes that plane.
+
+Live PR curls are outside harness judge. When they close an uncovered outcome,
+prefer a proof level that matches the claim (listen/HTML vs config/mode vs
+interactive) — see `PROCESS.md` “Live proof levels (soft).”
+
 ## Forbidden
 
 - Editing product code to make F2P pass
