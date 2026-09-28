@@ -11,6 +11,8 @@ When asked to see it, open the goal markdown file. Do not paste a substitute int
 
 Write new goals in that shape. Copy `evals/templates/goal.md`. Put `Set before the run.` above the Acceptance gates table.
 
+Prefer meaningful User outcome bullets map to Success criteria or Limitations (see PROCESS “Outcome vs check”). Do not over-correct: aspirational prose is fine when the gap is named.
+
 # Result file
 
 After the run, write `<goal>-result.md` beside the goal. The example is `evals/goals/github.com/hermes/hermes/20260918-graft-mini-svc-ab-result.md`. Copy `evals/templates/result.md`. When asked to see the result, open that file. Do not recap it.

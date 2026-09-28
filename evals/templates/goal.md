@@ -20,6 +20,11 @@ What a pass lets us do. What a pass does not let us do.
 
 What should be better for the person using the system.
 
+Prefer that each meaningful bullet either shows up as a Success criteria row
+(observable) or is called out under Limitations / Scope “Not covered.” Prose
+alone is easy to treat as proven when it is not. Wiggle room is fine for
+aspirational color — just do not lean on it when closing “works for the user.”
+
 # Scope
 
 | Covered | Not covered |
@@ -33,6 +38,10 @@ One row per thing we can observe. Do not combine two requirements on one row.
 | Criterion | What we look at |
 | --- | --- |
 |  |  |
+
+When this pack turns a mode **on** for one environment (Boat, Access, etc.),
+consider whether the claim also needs the mode **off** (or different) elsewhere.
+A second row or a Limitations line is usually enough; skip when out of scope.
 
 # Dataset
 
@@ -63,6 +72,10 @@ How many tries, which model, time limit, and whether a failed try is repeated.
 # Limitations
 
 What a pass would still leave unproven.
+
+If live V&V is how you close an outcome the static bar does not cover, prefer
+naming that gap here and matching live proof to the outcome (listen/HTML vs
+config/mode vs interactive) — see `PROCESS.md` “Live proof levels (soft).”
 
 # Result file
 
