@@ -26,7 +26,8 @@ return each clone to `origin/main`, and run `sync/doctor`.
 2. `CONSUMERS_ROOT` points at org checkouts (default `~/github.com/hutch-fail`)
 3. Working trees for included clones are **clean** (fail closed otherwise)
 
-Skip: hub (`evals`), `service-meter`, archived, `*-wt-*` worktrees.
+Skip: hub (`evals`), archived, `*-wt-*` worktrees. Include `service-meter`
+when product UI fixtures are under its own leaf (`ui-*`, not `evals/ui/`).
 
 ## Env
 
@@ -98,7 +99,7 @@ Soft-require personal skills via `~/.claude/skills/land-pr-until-green`
 ## Forbidden
 
 - Hard-reset over dirty trees
-- Touching `service-meter` / archived / worktrees
+- Touching archived / worktrees; wiping product-owned own leaves
 - Redistributing from a hub tip that still rsyncs all of `github.com/**`
 - Marking every draft ready in one burst without need
 - Claiming success without `sync/doctor` OK after merges

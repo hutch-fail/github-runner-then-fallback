@@ -7,6 +7,8 @@
 #   - *.tf / *.tf.json     → opentofu (remote-backend, …)
 #   - *.ts / *.tsx / tsconfig.json / package.json with typescript cues → typescript
 #     (family recognized; no language bar shipped yet — no-op stub)
+#   - design/**, docs/design-system/**, docs/north-star/**, evals/ui/**,
+#     scripts/ui-*, own-leaf ui-process|ui-jev|ui-visual|ui-semantic → ui
 #
 # Usage:
 #   bash scripts/eval-bars.sh [path...]
@@ -57,6 +59,24 @@ is_typescript_path() {
   return 1
 }
 
+# UI family path allowlist (org-wide). src/** alone is intentionally excluded.
+is_ui_path() {
+  local p="$1"
+  case "${p}" in
+    design/*|*/design/*) return 0 ;;
+    docs/design-system/*|*/docs/design-system/*) return 0 ;;
+    docs/north-star/*|*/docs/north-star/*) return 0 ;;
+    evals/ui/*|*/evals/ui/*) return 0 ;;
+    scripts/ui-*|*/scripts/ui-*) return 0 ;;
+    */ui-process/*|*ui-process/*) return 0 ;;
+    */ui-jev/*|*ui-jev/*) return 0 ;;
+    */ui-visual/*|*ui-visual/*) return 0 ;;
+    */ui-semantic/*|*ui-semantic/*) return 0 ;;
+    fixtures/language/ui/*|*/fixtures/language/ui/*|goals/language/ui/*|*/goals/language/ui/*) return 0 ;;
+  esac
+  return 1
+}
+
 # Skip kit / recipe paths (language fixtures ship *.tf; universe fixtures ship workflows).
 is_kit_path() {
   case "$1" in
@@ -65,12 +85,88 @@ is_kit_path() {
   return 1
 }
 
-# Print unique families that apply (one per line): universe (always), opentofu, typescript, …
+# Kit / recipe paths that still cue the ui family (skipped by is_kit_path otherwise).
+is_ui_kit_cue_path() {
+  local p="$1"
+  case "${p}" in
+    evals/fixtures/language/ui/*|*/evals/fixtures/language/ui/*) return 0 ;;
+    evals/goals/language/ui/*|*/evals/goals/language/ui/*) return 0 ;;
+    fixtures/language/ui/*|*/fixtures/language/ui/*) return 0 ;;
+    goals/language/ui/*|*/goals/language/ui/*) return 0 ;;
+    evals/fixtures/github.com/*/ui-process/*|*/evals/fixtures/github.com/*/ui-process/*) return 0 ;;
+    evals/fixtures/github.com/*/ui-jev/*|*/evals/fixtures/github.com/*/ui-jev/*) return 0 ;;
+    evals/fixtures/github.com/*/ui-visual/*|*/evals/fixtures/github.com/*/ui-visual/*) return 0 ;;
+    evals/fixtures/github.com/*/ui-semantic/*|*/evals/fixtures/github.com/*/ui-semantic/*) return 0 ;;
+    fixtures/github.com/*/ui-process/*|*/fixtures/github.com/*/ui-process/*) return 0 ;;
+    fixtures/github.com/*/ui-jev/*|*/fixtures/github.com/*/ui-jev/*) return 0 ;;
+    fixtures/github.com/*/ui-visual/*|*/fixtures/github.com/*/ui-visual/*) return 0 ;;
+    fixtures/github.com/*/ui-semantic/*|*/fixtures/github.com/*/ui-semantic/*) return 0 ;;
+    evals/ui/*|*/evals/ui/*) return 0 ;;
+  esac
+  return 1
+}
+
+resolve_manifest() {
+  local scan_root="$1"
+  if [[ -f "${scan_root}/evals/scope.yaml" ]]; then
+    printf '%s\n' "${scan_root}/evals/scope.yaml"
+  elif [[ -f "${scan_root}/scope.yaml" && -d "${scan_root}/harness" ]]; then
+    printf '%s\n' "${scan_root}/scope.yaml"
+  fi
+}
+
+# Families declared in consumer evals/scope.yaml languages: (select SoT).
+# CI calls eval/bars with no path args — declaration is how UI/OpenTofu bars
+# run automatically for new consumers that opt in via the manifest.
+families_from_manifest() {
+  local scan_root="$1" manifest lang
+  manifest="$(resolve_manifest "${scan_root}")"
+  [[ -n "${manifest}" && -f "${manifest}" ]] || return 0
+  while IFS= read -r lang; do
+    [[ -n "${lang}" ]] || continue
+    case "${lang}" in
+      opentofu|typescript|python|ui) printf '%s\n' "${lang}" ;;
+    esac
+  done < <(
+    # Prefer PyYAML when present; else list items under languages:.
+    python3 - "${manifest}" <<'PY' 2>/dev/null || true
+import sys
+from pathlib import Path
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+try:
+    import yaml  # type: ignore
+    data = yaml.safe_load(text) or {}
+    langs = data.get("languages") or []
+    if isinstance(langs, str):
+        langs = [langs]
+    for lang in langs:
+        if lang:
+            print(str(lang).strip())
+except Exception:
+    in_langs = False
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        if not line or line.lstrip().startswith("#"):
+            continue
+        if line.startswith("languages:"):
+            in_langs = True
+            continue
+        if in_langs and line.lstrip().startswith("-"):
+            print(line.lstrip()[1:].strip().strip("'\""))
+        elif ":" in line and not line.startswith(" "):
+            in_langs = False
+PY
+  )
+}
+
+# Print unique families that apply (one per line): universe (always), opentofu, typescript, ui, …
+# Sources: FORCE_FAMILIES, path args (pre-commit), and scope.yaml languages (CI / default).
 detect_families() {
-  local arg fam
+  local arg fam scan_root
   declare -A seen=()
   # Universe bars always apply (global / recipe-wide policy).
   seen[universe]=1
+  scan_root="$(cd "${HERMES_EVAL_SCAN_ROOT:-${PWD}}" && pwd)"
 
   if [[ -n "${HERMES_EVAL_FORCE_FAMILIES:-}" ]]; then
     IFS=',' read -r -a forced <<<"${HERMES_EVAL_FORCE_FAMILIES}"
@@ -86,7 +182,15 @@ detect_families() {
     done
   fi
 
+  while IFS= read -r fam; do
+    [[ -n "${fam}" ]] || continue
+    seen["${fam}"]=1
+  done < <(families_from_manifest "${scan_root}")
+
   for arg in "$@"; do
+    if is_ui_kit_cue_path "${arg}"; then
+      seen[ui]=1
+    fi
     if is_kit_path "${arg}"; then
       continue
     fi
@@ -96,11 +200,25 @@ detect_families() {
     if is_typescript_path "${arg}"; then
       seen[typescript]=1
     fi
+    if is_ui_path "${arg}"; then
+      seen[ui]=1
+    fi
   done
 
   for fam in "${!seen[@]}"; do
     printf '%s\n' "${fam}"
   done | sort -u
+}
+
+warn_if_manifest_omits() {
+  local scan_root="$1" lang="$2"
+  local manifest
+  manifest="$(resolve_manifest "${scan_root}")"
+  [[ -n "${manifest}" ]] || return 0
+  if ! grep -qE "^[[:space:]]*-[[:space:]]*${lang}[[:space:]]*$|languages:.*${lang}" "${manifest}"; then
+    printf 'warning: %s does not list languages: %s (%s bars still run on matching paths)\n' \
+      "${manifest}" "${lang}" "${lang}" >&2
+  fi
 }
 
 run_universe_bars() {
@@ -124,16 +242,7 @@ run_opentofu_bars() {
     return 1
   fi
 
-  local manifest=""
-  if [[ -f "${scan_root}/evals/scope.yaml" ]]; then
-    manifest="${scan_root}/evals/scope.yaml"
-  elif [[ -f "${scan_root}/scope.yaml" && -d "${scan_root}/harness" ]]; then
-    manifest="${scan_root}/scope.yaml"
-  fi
-  if [[ -n "${manifest}" ]] && ! grep -qE '^[[:space:]]*-[[:space:]]*opentofu[[:space:]]*$|languages:.*opentofu' "${manifest}"; then
-    printf 'warning: %s does not list languages: opentofu (opentofu bars still run on TF paths)\n' \
-      "${manifest}" >&2
-  fi
+  warn_if_manifest_omits "${scan_root}" "opentofu"
 
   export HERMES_EVAL_SCAN_ROOT="${scan_root}"
   export HERMES_EVAL_REPO_ROOT="${scan_root}"
@@ -145,6 +254,29 @@ run_typescript_bars() {
   # changing the dispatcher shape. No TypeScript language fixture yet.
   printf 'eval-bars: typescript family selected (stub — no language bar yet; skip)\n' >&2
   return 0
+}
+
+run_ui_bars() {
+  local kit="$1" scan_root="$2"
+  local check rc=0
+  warn_if_manifest_omits "${scan_root}" "ui"
+
+  export HERMES_EVAL_SCAN_ROOT="${scan_root}"
+  export HERMES_EVAL_REPO_ROOT="${scan_root}"
+
+  for check in \
+    "${kit}/fixtures/language/ui/20260928-ui-scope-manifest/check.sh" \
+    "${kit}/fixtures/language/ui/20260928-ui-process-entrypoint/check.sh"; do
+    if [[ ! -x "${check}" ]]; then
+      printf 'error: missing UI bar check at %s\n' "${check}" >&2
+      rc=1
+      continue
+    fi
+    if ! bash "${check}"; then
+      rc=1
+    fi
+  done
+  return "${rc}"
 }
 
 kit="$(resolve_kit)"
@@ -167,6 +299,11 @@ for fam in "${families[@]}"; do
       ;;
     typescript)
       if ! run_typescript_bars "${kit}" "${scan_root}"; then
+        rc=1
+      fi
+      ;;
+    ui)
+      if ! run_ui_bars "${kit}" "${scan_root}"; then
         rc=1
       fi
       ;;

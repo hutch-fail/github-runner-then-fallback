@@ -69,6 +69,8 @@ write_goal "${recipe}/goals/language/typescript/20260921-u-ts.md" \
   '20260921-u-ts' 'scope: language' 'languages: typescript'
 write_goal "${recipe}/goals/language/python/20260921-u-py.md" \
   '20260921-u-py' 'scope: language' 'languages: python'
+write_goal "${recipe}/goals/language/ui/20260921-u-ui.md" \
+  '20260921-u-ui' 'scope: language' 'languages: ui'
 write_goal "${recipe}/goals/github.com/acme/demo/20260921-u-repo.md" \
   '20260921-u-repo' 'scope: repo'
 write_goal "${recipe}/goals/github.com/other/other/20260921-u-other.md" \
@@ -103,6 +105,7 @@ printf '%s\n' "$(cat "${tmp}/err")" | grep -qE 'opt_out.*20260921-u-uni' \
   || miss "missing opt_out stderr"
 printf '%s\n' "${out}" | grep -q '20260921-u-ts' || miss "ts language missing"
 printf '%s\n' "${out}" | grep -q '20260921-u-py' && miss "py language wrongly included"
+printf '%s\n' "${out}" | grep -q '20260921-u-ui' && miss "ui language wrongly included with only typescript"
 printf '%s\n' "${out}" | grep -q '20260921-u-repo' || miss "matching repo missing"
 printf '%s\n' "${out}" | grep -q '20260921-u-other' && miss "other repo wrongly included"
 printf '%s\n' "${out}" | grep -q '20260921-u-active' && miss "active wrongly included"
@@ -175,6 +178,26 @@ set -e
 [[ "${rc}" -eq 0 ]] || miss "select with missing manifest failed"
 printf '%s\n' "${out}" | grep -q '20260921-u-uni' || miss "universe should apply with missing manifest"
 printf '%s\n' "${out}" | grep -q '20260921-u-ts' && miss "language should not apply with empty languages"
+printf '%s\n' "${out}" | grep -q '20260921-u-ui' && miss "ui should not apply with empty languages"
+
+# languages: [ui] selects ui language goals only among language bars
+write_manifest "${recipe}/scope.yaml" \
+  'repo: github.com/acme/demo' \
+  'languages:' \
+  '  - ui'
+set +e
+out="$(
+  HERMES_EVAL_RECIPE_ROOT="${recipe}" \
+    EVALS_ROOT="${process}" \
+    HERMES_EVALS_ROOT="${process}" \
+    bash "${cli}" select 2>/dev/null
+)"
+rc=$?
+set -e
+[[ "${rc}" -eq 0 ]] || miss "select with languages ui failed"
+printf '%s\n' "${out}" | grep -q '20260921-u-ui' || miss "ui language missing when languages: [ui]"
+printf '%s\n' "${out}" | grep -q '20260921-u-ts' && miss "ts wrongly included with only ui"
+printf '%s\n' "${out}" | grep -q '20260921-u-uni' || miss "universe missing with ui manifest"
 
 if [[ "${fail}" -ne 0 ]]; then
   exit 1

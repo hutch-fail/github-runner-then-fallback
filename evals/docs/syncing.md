@@ -12,7 +12,7 @@ hub.
 | **kit** | Has `evals/Makefile` | Packs + kit-only deltas | `sync/pull` |
 | **pack-only** | Packs/`scope.yaml` but no kit | Packs only | Bootstrap via `sync/pull` |
 | **missing** | No `evals/` | Nothing | Bootstrap kit + minimal `scope.yaml` |
-| **skipped** | `service-meter`, archived, or hub itself | — | — |
+| **skipped** | archived, or hub itself | — | — |
 
 ## Workflow (mechanical)
 
@@ -44,9 +44,11 @@ make sync/doctor CONSUMERS_ROOT="$HOME/github.com/hutch-fail"
 ```
 
 Discovery always uses `gh repo list` (not a hard-coded subset). Archived
-repos and `service-meter` are skipped. Local `*-wt-*` / `.worktrees/` are
-ignored (only canonical clones under `CONSUMERS_ROOT/<name>` or
-`dot-github` for `.github`).
+repos are skipped. `service-meter` is included when its product UI fixtures
+live under the own leaf
+`evals/fixtures/github.com/hutch-fail/service-meter/ui-*` (not a wipeable
+`evals/ui/` snowflake). Local `*-wt-*` / `.worktrees/` are ignored (only
+canonical clones under `CONSUMERS_ROOT/<name>` or `dot-github` for `.github`).
 
 ## Ownership
 
@@ -110,7 +112,7 @@ paths, and fights product-owned `scope.yaml`. `sync/pull` uses selective
 ## Agent checklist
 
 1. `make sync/list` — confirm classes; fail closed on unexpected non-archived repos.
-2. Reset included clones to `origin/main` (never touch `service-meter`).
+2. Reset included clones to `origin/main` (refuse dirty trees).
 3. Branch hub `chore/harvest-consumer-evals` → tooling + `sync/harvest`.
 4. Validate (`tests/unit`, harvest `--dry-run`); open hub PR; merge when green.
 5. One branch/PR per included consumer: `sync-pull.sh`, preserve/create
