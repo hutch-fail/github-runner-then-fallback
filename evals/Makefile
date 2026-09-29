@@ -22,7 +22,7 @@ help:
 		'make eval/list [GOAL=…]' \
 		'make eval/select [GOAL=…]' \
 		'make eval/doctor-scope' \
-		'make eval/bars   # universe always + language families from paths' \
+		'make eval/bars   # universe always + language families (manifest + paths)' \
 		'make eval/report GOAL=…' \
 		'make sync/list [CONSUMERS_ROOT=…] [SYNC_FORMAT=tsv|json]' \
 		'make sync/harvest CONSUMERS_ROOT=…' \
@@ -61,8 +61,8 @@ eval/select:
 eval/doctor-scope:
 	@bash harness/goal.sh doctor-scope
 
-# Shared bars: always universe; language families from HERMES_EVAL_FORCE_FAMILIES
-# or path args when callers pass them (pre-commit). CI uses scripts/ci-eval-bars.sh.
+# Shared bars: always universe; language families from scope.yaml languages:,
+# path args (pre-commit), or HERMES_EVAL_FORCE_FAMILIES. CI: scripts/ci-eval-bars.sh.
 eval/bars:
 	@bash scripts/eval-bars.sh
 

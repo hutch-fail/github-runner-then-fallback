@@ -109,8 +109,26 @@ opt_out:
 | --- | --- | --- |
 | `schema` | yes | `evals-scope/v1` |
 | `repo` | recommended | `github.com/<org>/<repo>` identity for `scope: repo` matching |
-| `languages` | no | List of language ids; empty ⇒ no language bars |
+| `languages` | no | List of language ids (registry below); empty ⇒ no language bars |
 | `opt_out` | no | List of `{ id \| path, reason }` |
+
+### Language id registry
+
+Supported `languages:` ids (declaration is SoT for `make eval/select`):
+
+| Id | Meaning | Hub home |
+| --- | --- | --- |
+| `opentofu` | OpenTofu / Terraform language bars | `goals/language/opentofu/` |
+| `typescript` | TypeScript language bars (stub / reserved) | `goals/language/typescript/` when present |
+| `python` | Python language bars (id reserved; no bars yet) | `goals/language/python/` when present |
+| `ui` | Design-system / front-end UX bars (not “TypeScript” alone) | `goals/language/ui/` |
+
+`make eval/select` is **declaration-only**: a language goal applies only when the
+consumer lists that id. `make eval/bars` runs families from the same
+`languages:` list (so declared UI consumers get design bars in CI with no path
+args), plus path-detect (e.g. `*.tf` → `opentofu`, design-system / `scripts/ui-*`
+→ `ui`). Path-detect **warns** when paths imply a family the manifest omits —
+that warning does not change `eval/select`.
 
 **Defaults when the file is missing:** infer `repo` from `git remote` /
 `HERMES_EVAL_REPO_ROOT` when possible; `languages: []`; `opt_out: []`.
@@ -203,7 +221,8 @@ fixtures/language/opentofu/20260924-remote-backend-locking/
 Host pre-commit gate: see [`docs/evals.md`](evals.md)
 (`scripts/pre-commit-evals.sh` → `scripts/eval-bars.sh` / `make eval/bars`).
 One generic entry: **universe** bars always run; language families map from
-changed paths (e.g. `*.tf` → OpenTofu remote-backend; `*.ts` → typescript stub).
+changed paths (e.g. `*.tf` → OpenTofu remote-backend; `*.ts` → typescript stub;
+design-system / `scripts/ui-*` → UI process + scope-manifest bars).
 
 ```yaml
 ---

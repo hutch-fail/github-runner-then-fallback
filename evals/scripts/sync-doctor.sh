@@ -60,12 +60,6 @@ while IFS= read -r row; do
   printf 'OK    %-24s kit scope=%s\n' "$name" "$(grep -E '^repo:' "$path/evals/scope.yaml" | head -1 | awk '{print $2}')"
 done < <(CONSUMERS_ROOT="$CONSUMERS_ROOT" "$LIST_SCRIPT" --format json --consumers-root "$CONSUMERS_ROOT" --org "$ORG" | jq -c '.[]')
 
-# Meter must remain untouched by this pass (informational)
-meter="$CONSUMERS_ROOT/service-meter"
-if [[ -d "$meter" ]]; then
-  printf 'NOTE  service-meter skipped (other agent)\n'
-fi
-
 if [[ "$FAIL" -ne 0 ]]; then
   printf 'sync/doctor: FAIL\n' >&2
   exit 1

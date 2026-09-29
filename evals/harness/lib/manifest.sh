@@ -215,5 +215,20 @@ cmd_doctor_scope() {
   fi
 
   load_scope_manifest
+
+  # Soft hint: UI cues without languages: ui (bars/select stay declaration-based).
+  local product_root
+  product_root="$(cd "${recipe}/.." 2>/dev/null && pwd || true)"
+  if [[ -n "${product_root}" ]] \
+    && { [[ -d "${product_root}/design" ]] \
+      || [[ -d "${product_root}/docs/design-system" ]] \
+      || compgen -G "${product_root}/scripts/ui-*" >/dev/null 2>&1; }; then
+    if [[ ! -f "${manifest}" ]] \
+      || ! grep -qE '^[[:space:]]*-[[:space:]]*ui[[:space:]]*$|languages:.*ui' "${manifest}" 2>/dev/null; then
+      printf 'hint: UI/design-system cues present — add languages: ui to evals/scope.yaml so language/ui bars select and eval/bars runs them in CI\n' \
+        >&2
+    fi
+  fi
+
   printf 'doctor-scope: ready\n'
 }

@@ -7,7 +7,7 @@ FORMAT=tsv
 ORG=hutch-fail
 CONSUMERS_ROOT="${CONSUMERS_ROOT:-$HOME/github.com/hutch-fail}"
 HUB_NAME=evals
-SKIP_ALWAYS=(service-meter)
+SKIP_ALWAYS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

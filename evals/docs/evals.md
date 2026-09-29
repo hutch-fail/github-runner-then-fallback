@@ -66,7 +66,8 @@ Host pre-commit snippet (paths relative to the **product** repo root):
 ```
 
 Generic evals pre-commit (add **after** the `hutch-fail/pre-commit`
-`platform` hook). One host entry; it delegates to the shared bars dispatcher
+`platform` hook). One host entry; it runs the pack gate under `PRE_COMMIT=1`
+(fixture + pre-run goal; result stays CI-only), then the shared bars dispatcher
 (`scripts/eval-bars.sh` / `make eval/bars`):
 
 ```yaml
@@ -78,6 +79,10 @@ Generic evals pre-commit (add **after** the `hutch-fail/pre-commit`
       language: system
       pass_filenames: true
 ```
+
+Hosts that already use `evals-pre-commit` pick up the pack gate on the next
+`sync/pull` — no second local hook required. The dedicated `pr-has-eval-pack`
+snippet above remains valid (hub / specialized consumers).
 
 Shared entrypoint (local / pre-commit / CI):
 
@@ -93,11 +98,25 @@ Behavior today:
 | (always) | `universe` | No raw `secrets.GH_APP_ID` / `GH_APP_PRIVATE_KEY` (`20260924-no-gha-app-actions-secrets`) |
 | `*.tf` / `*.tf.json` | `opentofu` | Remote-backend language bar (`20260924-remote-backend-locking`) |
 | `*.ts` / `*.tsx` / `tsconfig.json` | `typescript` | Stub (family detected; no language bar yet) |
+| `design/**`, `docs/design-system/**`, `docs/north-star/**`, `evals/ui/**`, `scripts/ui-*`, own-leaf `ui-process` / `ui-jev` / `ui-visual` / `ui-semantic` | `ui` | Scope-manifest + process-entrypoint language bars |
 
-Universe bars always run against `HERMES_EVAL_SCAN_ROOT` (default cwd). Language
-families are additive from path args (pre-commit `pass_filenames`) or
-`HERMES_EVAL_FORCE_FAMILIES`. Extend `scripts/eval-bars.sh` when adding new
-families.
+Language ids for `evals/scope.yaml` / select: `opentofu`, `typescript`,
+`python`, `ui` — see [`scoping.md`](scoping.md) registry. `eval/select` is
+declaration-only. `eval/bars` selects language families from (1) `languages:`
+in the consumer manifest (so CI / `make eval/bars` with no path args still
+runs declared UI/OpenTofu bars), (2) changed path args (pre-commit), and
+(3) `HERMES_EVAL_FORCE_FAMILIES`. Path-detect still **warns** when paths imply
+`ui` / `opentofu` but the manifest omits that id. Do **not** treat `src/**`
+alone as org-wide `ui` (too broad).
+
+New UI/UX consumers: declare `languages: [ui]`, keep process fixtures under
+own-leaf `ui-process/` (or legacy `evals/ui/`), expose `npm run ui:process` or
+`scripts/ui-process-check.*`. Shared bars then apply via `eval-ci` /
+`make eval/bars` without a product-specific bars job. Node/Jev-heavy gates stay
+optional product workflows.
+
+Universe bars always run against `HERMES_EVAL_SCAN_ROOT` (default cwd).
+Extend `scripts/eval-bars.sh` when adding new families.
 
 Rule A for remote-backend: fail `backend "local"` and missing backend; pass any
 non-local backend type (including partial `backend "s3" {}`).
@@ -136,7 +155,8 @@ and `doctor-scope: ready` when OK.
   [`templates/github-workflows/eval-ci.yml`](../templates/github-workflows/eval-ci.yml).
 - **Bars (not full select→verify):** `make eval/bars` always runs applicable
   universe checks with `HERMES_EVAL_SCAN_ROOT` set to the caller workspace.
-  Language families run when paths or `HERMES_EVAL_FORCE_FAMILIES` select them.
+  Language families run when `languages:` in the consumer manifest, matching
+  paths, or `HERMES_EVAL_FORCE_FAMILIES` select them.
   This is **not** full select→verify for every selected goal
   ([#8](https://github.com/hutch-fail/evals/issues/8)).
 - **Deprecated callables:** [`eval-pack-gate.yml`](../.github/workflows/eval-pack-gate.yml)
