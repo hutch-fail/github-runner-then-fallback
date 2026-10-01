@@ -71,6 +71,98 @@ is_outside() {
   fi
 }
 
+is_lockfile_path() {
+  local base="${1##*/}"
+  case "${base}" in
+    package-lock.json|yarn.lock|pnpm-lock.yaml|npm-shrinkwrap.json|bun.lock|bun.lockb|poetry.lock|Pipfile.lock|uv.lock|Cargo.lock|go.sum|composer.lock|Gemfile.lock|.terraform.lock.hcl|Chart.lock)
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+is_gha_pin_path() {
+  case "$1" in
+    .github/workflows/*.yml|.github/workflows/*.yaml) return 0 ;;
+  esac
+  if [[ "$1" == .github/actions/* && ( "$1" == *.yml || "$1" == *.yaml ) ]]; then
+    return 0
+  fi
+  return 1
+}
+
+# Every added/removed line in the unified diff must be pin-only (or blank/comment).
+diff_is_pin_only() {
+  local path="$1" diff_range="${2:-}" diff=""
+  if [[ -n "${diff_range}" ]]; then
+    diff="$(git -C "${ROOT}" diff "${diff_range}" -- "${path}" 2>/dev/null || true)"
+  else
+    diff="$(
+      {
+        git -C "${ROOT}" diff --cached -- "${path}" 2>/dev/null || true
+        local base=""
+        if git -C "${ROOT}" rev-parse --verify origin/main >/dev/null 2>&1; then
+          base="$(git -C "${ROOT}" merge-base origin/main HEAD 2>/dev/null || true)"
+        elif git -C "${ROOT}" rev-parse --verify main >/dev/null 2>&1; then
+          base="$(git -C "${ROOT}" merge-base main HEAD 2>/dev/null || true)"
+        fi
+        if [[ -n "${base}" ]]; then
+          git -C "${ROOT}" diff "${base}" HEAD -- "${path}" 2>/dev/null || true
+        fi
+      } 2>/dev/null
+    )"
+  fi
+  [[ -n "${diff}" ]] || return 1
+  local line body
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    case "${line}" in
+      '+++'*|'---'*) continue ;;
+      '+'*|'-'*)
+        body="${line#?}"
+        body="${body#"${body%%[![:space:]]*}"}"
+        [[ -n "${body}" ]] || continue
+        case "${body}" in
+          \#*) continue ;;
+        esac
+        if [[ "${body}" =~ ^[[:space:]]*-?[[:space:]]*uses:[[:space:]]*.+@ ]]; then
+          continue
+        fi
+        if [[ "${body}" =~ ^[[:space:]]*-?[[:space:]]*hub_ref:[[:space:]]* ]]; then
+          continue
+        fi
+        if [[ "${body}" =~ ^[[:space:]]*-?[[:space:]]*rev:[[:space:]]* ]]; then
+          continue
+        fi
+        return 1
+        ;;
+    esac
+  done <<<"${diff}"
+  return 0
+}
+
+path_is_dependency_bump() {
+  local path="$1" diff_range="${2:-}"
+  is_lockfile_path "${path}" && return 0
+  if is_gha_pin_path "${path}"; then
+    diff_is_pin_only "${path}" "${diff_range}"
+    return $?
+  fi
+  return 1
+}
+
+paths_are_dependency_bump_only() {
+  local diff_range="${1:-}"
+  shift
+  local path outside=0
+  for path in "$@"; do
+    [[ -n "${path}" ]] || continue
+    is_outside "${path}" || continue
+    outside=1
+    path_is_dependency_bump "${path}" "${diff_range}" || return 1
+  done
+  [[ "${outside}" -eq 1 ]]
+}
+
 missing_kinds() {
   local mode="$1"
   shift
@@ -130,9 +222,13 @@ result_content_problems() {
 }
 
 report_missing() {
-  local mode="$1"
-  shift
+  local mode="$1" diff_range="${2:-}"
+  shift 2
   local missing bad_results kind path
+  if paths_are_dependency_bump_only "${diff_range}" "$@"; then
+    printf '%s\n' 'eval pack gate: dependency-bump-only diff — skip' >&2
+    return 0
+  fi
   missing="$(missing_kinds "${mode}" "$@")"
   bad_results="$(result_content_problems "${mode}" "$@")"
   [[ -n "${missing}" || -n "${bad_results}" ]] || return 0
@@ -183,8 +279,8 @@ collect_precommit_paths() {
 }
 
 check_list() {
-  local mode="$1"
-  shift
+  local mode="$1" diff_range="${2:-}"
+  shift 2
   local -a paths=()
   local line
   while IFS= read -r line; do
@@ -194,7 +290,7 @@ check_list() {
   if [[ "${#paths[@]}" -eq 0 ]]; then
     return 0
   fi
-  report_missing "${mode}" "${paths[@]}"
+  report_missing "${mode}" "${diff_range}" "${paths[@]}"
 }
 
 self_test() {
@@ -306,6 +402,56 @@ PATHS
     printf '✗ self-test: pre-commit mode must not require the result section\n' >&2
     fail=1
   fi
+  local lock_only="${tmp}/lock-only"
+  if [[ "${LAYOUT}" == "hub" ]]; then
+    printf '%s\n' 'poetry.lock' >"${lock_only}"
+  else
+    printf '%s\n' 'poetry.lock' >"${lock_only}"
+  fi
+  local skip_msg
+  skip_msg="$(bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${lock_only}" 2>&1 >/dev/null || true)"
+  if ! printf '%s\n' "${skip_msg}" | grep -Fq 'dependency-bump-only diff — skip'; then
+    printf '✗ self-test: lockfile-only diff did not skip pack gate\n' >&2
+    fail=1
+  fi
+  if ! bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${lock_only}" >/dev/null 2>&1; then
+    printf '✗ self-test: lockfile-only diff should pass without a pack\n' >&2
+    fail=1
+  fi
+  local gha_repo="${tmp}/gha-repo"
+  mkdir -p "${gha_repo}/.github/workflows"
+  git -C "${gha_repo}" init -q
+  git -C "${gha_repo}" config user.email 'eval@example.com'
+  git -C "${gha_repo}" config user.name 'eval'
+  cat >"${gha_repo}/.github/workflows/ci.yml" <<'WF'
+name: ci
+on: push
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+WF
+  git -C "${gha_repo}" add .
+  git -C "${gha_repo}" commit -q -m 'base'
+  sed -i '' 's/checkout@v4/checkout@abc12345678901234567890123456789012345678/' "${gha_repo}/.github/workflows/ci.yml" 2>/dev/null \
+    || sed -i 's/checkout@v4/checkout@abc12345678901234567890123456789012345678/' "${gha_repo}/.github/workflows/ci.yml"
+  git -C "${gha_repo}" commit -q -am 'pin bump'
+  if ! EVALS_PACK_ROOT="${gha_repo}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --range 'HEAD~1...HEAD' >/dev/null 2>&1; then
+    printf '✗ self-test: workflow pin-only diff should pass without a pack\n' >&2
+    fail=1
+  fi
+  git -C "${gha_repo}" reset --hard HEAD~1 -q
+  cat >>"${gha_repo}/.github/workflows/ci.yml" <<'WF'
+
+  y:
+    runs-on: ubuntu-latest
+WF
+  git -C "${gha_repo}" commit -q -am 'logic change'
+  if EVALS_PACK_ROOT="${gha_repo}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --range 'HEAD~1...HEAD' >/dev/null 2>&1; then
+    printf '✗ self-test: workflow non-pin diff must still require a pack\n' >&2
+    fail=1
+  fi
   if [[ "${fail}" -ne 0 ]]; then
     exit 1
   fi
@@ -320,7 +466,7 @@ range=""
 
 if [[ "$#" -eq 0 ]]; then
   if [[ -n "${PRE_COMMIT:-}" ]]; then
-    check_list pre-commit < <(collect_precommit_paths)
+    check_list pre-commit "" < <(collect_precommit_paths)
     exit $?
   fi
   self_test
@@ -370,9 +516,9 @@ if [[ -n "${paths_file}" ]]; then
     printf '✗ paths file not found: %s\n' "${paths_file}" >&2
     exit 2
   }
-  check_list "${mode}" < <(read_paths_file "${paths_file}")
+  check_list "${mode}" "" < <(read_paths_file "${paths_file}")
 elif [[ -n "${range}" ]]; then
-  check_list "${mode}" < <(paths_from_range "${range}")
+  check_list "${mode}" "${range}" < <(paths_from_range "${range}")
 else
   usage
   exit 2

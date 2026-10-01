@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Hermes goal harness: goal/v1 assert-red / run / verify / solve / report.
-# Methodology (templates + CLI) lives in this repo; process SoT defaults to
-# ~/.hermes/evals (project leaf evals_process/). Product repos may track their
-# own evals/ for durable claims. Host-runnable; no Incus required.
+# Goals/fixtures/runs live in this evals git tree (hub or product sync/subtree/
+# mount). Override with EVALS_ROOT when needed. Host-runnable; no Incus required.
 # Usage: evals/harness/goal.sh <parse|assert-red|run|verify|solve|list|select|doctor-scope|report|help> [GOAL]
 set -euo pipefail
 
@@ -29,10 +28,8 @@ For list/select, GOAL is optional and restricts output to that goal (and
 allows scope: active for it).
 
 Environment:
-  EVALS_ROOT               Preferred goals/fixtures/runs root
+  EVALS_ROOT               Preferred goals/fixtures/runs root (default: this evals tree)
   HERMES_EVALS_ROOT        Alias for EVALS_ROOT (compat)
-  HERMES_EVALS_HOST        Alias for host SoT when EVALS_ROOT unset
-                           (default: ~/.hermes/evals if seeded, else this hub)
   HERMES_EVAL_RUNS         Override runs directory (default: <evals_root>/runs)
   HERMES_EVAL_RECIPE_ROOT  Override recipe root for list/select discovery
                            (default: this hub / vendored evals/)
@@ -52,22 +49,17 @@ else
   repo_root="${repo_evals}"
 fi
 
-# Resolve process evals SoT (goals/fixtures/runs). Harness lives in this hub.
+# Resolve goals/fixtures/runs root. Default: this evals git tree (hub or synced).
 resolve_evals_dir() {
-  local host_default candidate root
+  local root
   root="${EVALS_ROOT:-${HERMES_EVALS_ROOT:-}}"
   if [[ -n "${root}" && -d "${root}/goals" ]]; then
-    printf '%s\n' "${root}"
+    printf '%s
+' "${root}"
     return 0
   fi
-  host_default="${HERMES_EVALS_HOST:-${HOME}/.hermes/evals}"
-  if [[ -d "${host_default}/goals" ]] \
-    && [[ -n "$(find "${host_default}/goals" -type f 2>/dev/null | head -1)" ]]; then
-    printf '%s\n' "${host_default}"
-    return 0
-  fi
-  # Clone / CI smoke: tracked goals under this repo.
-  printf '%s\n' "$(cd "${repo_evals}" && pwd)"
+  printf '%s
+' "$(cd "${repo_evals}" && pwd)"
 }
 
 evals_dir="$(resolve_evals_dir)"

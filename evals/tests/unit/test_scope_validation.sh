@@ -96,7 +96,7 @@ write_goal "${tmp}/goals/hub-kit-smoke.md"
 expect_ok 'legacy hub-kit-smoke' 'hub-kit-smoke' 'universe'
 
 write_goal "${tmp}/goals/scratch/20260921-active.md" 'scope: active'
-expect_ok 'active under process SoT' 'scratch/20260921-active' 'active'
+expect_ok 'active under evals git' 'scratch/20260921-active' 'active'
 
 write_goal "${tmp}/goals/odd-name.md"
 expect_ok 'infer active for non-recipe flat' 'odd-name' 'active'
@@ -135,9 +135,11 @@ set +e
 out="$(EVALS_ROOT="${ROOT}" HERMES_EVALS_ROOT="${ROOT}" bash "${cli}" parse "${active}" 2>&1)"
 rc=$?
 set -e
-if [[ "${rc}" -eq 0 ]]; then
-  miss "active under recipe goals should fail; got: ${out}"
+if [[ "${rc}" -ne 0 ]]; then
+  miss "active under recipe goals should parse; got: ${out}"
 fi
+printf '✓ active under recipe goals ok\n'
+
 
 # Real tracked goals still parse
 for goal in fixture-token-echo \

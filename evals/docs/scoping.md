@@ -60,7 +60,7 @@ bars in the wrong tree, or treat process experiments as product law.
 | `universe` | Every recipe consumer | Hub `goals/universe/…` | `scope: universe` | Recipe goals only — not product-only trees |
 | `language` | Consumers that list that language | Hub `goals/language/<lang>/…` | `scope: language` + `languages: […]` | Path `<lang>` must match frontmatter |
 | `repo` | Standing bar for one product | `goals/github.com/<org>/<repo>/…` | `scope: repo` (`repos:` optional if path encodes identity) | Path org/repo must match consumer `repo` |
-| `active` | Current experiment | Process SoT only (`EVALS_ROOT` / `evals_process/`) | `scope: active` | Refuse under product `evals/goals/` |
+| `active` | WIP experiment | Same evals git tree (hub or product leaf) | `scope: active` | Allowed under `evals/goals/`; default select skips unless `EVALS_INCLUDE_ACTIVE=1` |
 
 ### Ownership and inheritance
 
@@ -68,7 +68,7 @@ bars in the wrong tree, or treat process experiments as product law.
 | --- | --- | --- |
 | Universe / language | This hub (recipe PR) | Via `sync/pull` / subtree / mount of `evals/` |
 | Repo | Product repo (commits under `evals/goals/github.com/…`) | Must be **harvested to hub** for org SoT ([`syncing.md`](syncing.md)); then redistribute |
-| Active | Process SoT (not committed to the product) | Local / personal only |
+| Active | Authored in evals git on a branch; not standing CI until Adopt | Same sync/subtree/mount as the rest of `evals/` |
 
 `evals/scope.yaml` is product-owned and **never** harvested onto the hub.
 
@@ -325,11 +325,11 @@ solver: none
 ---
 ```
 
-### Active-dev (process SoT only)
+### Active-dev (WIP in evals git)
 
 ```text
-# under EVALS_ROOT / evals_process/, not product evals/goals/
-goals/github.com/example/scratch/20260921-try-graft-overlay.md
+# same evals tree; feature branch; skipped by default select
+goals/github.com/example/product/20260921-try-graft-overlay.md
 ```
 
 ```yaml
@@ -434,7 +434,7 @@ on:
       - 'docs/**'
 jobs:
   eval-ci:
-    if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
+    if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'renovate[bot]'
     uses: hutch-fail/evals/.github/workflows/eval-ci.yml@<pin>
     with:
       evals_path: evals

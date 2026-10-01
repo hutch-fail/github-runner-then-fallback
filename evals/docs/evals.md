@@ -31,11 +31,8 @@ Public API: `make eval/assert-red`, `make eval/verify`, `make eval/solve`,
 `make -C evals eval/…`. CLI skill: `goal`. Hypothesis drafts:
 `docs/hypothesis-playground.md`. Consumer install: `docs/consuming.md`.
 
-**Personal goals/fixtures/runs** (optional) live under `EVALS_ROOT` /
-`HERMES_EVALS_ROOT` (default `~/.hermes/evals` on the host). This hub keeps the
-harness, skills, and a seed copy of goals/fixtures for CI. Hermes (or similar)
-may bind-mount the personal tree into each project as `evals_process/` (not
-symlinks).
+Goals/fixtures/runs live in this evals git tree. Override with `EVALS_ROOT` / `HERMES_EVALS_ROOT` when pointing the harness at another checkout. This hub keeps the harness, skills, and goals/fixtures for CI and sync to products.
+
 
 New process goals live under `goals/github.com/<slug>/` (mirrors typical guest
 mounts such as `/home/ubuntu/github.com/<slug>/`).
@@ -58,8 +55,14 @@ check and a pre-run goal already on the branch. It does not require
 fixture, the goal, and the result before merge. `tests/unit/` and `runs/` do
 not count. If a goal already covers the change, run it. Doing only the
 implementation that turns checks green is forbidden. See [`README.md`](../README.md).
-Dependabot (`dependabot[bot]`) skips eval-ci — version bumps are not
-behavior PRs; use `make sync-dependabot` (with an eval pack) for policy YAML.
+Dependabot (`dependabot[bot]`) and Renovate (`renovate[bot]`) skip eval-ci —
+version bumps are not behavior PRs; use `make sync-dependabot` (with an eval
+pack) for policy YAML. The pack gate (`pr-has-eval-pack`) also skips when every
+changed path outside `evals/` is a **dependency bump only**: known lockfiles
+(`poetry.lock`, `package-lock.json`, …) or pin-only edits in
+`.github/workflows/*` and `.github/actions/**` (`uses: …@`, `hub_ref:`, `rev:`).
+Workflow logic changes still need an eval pack; pin bumps may still run
+`language/gha` bars when those paths change.
 
 ## Host consumer (subtree / mount at `evals/`)
 

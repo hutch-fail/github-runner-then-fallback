@@ -35,7 +35,7 @@ usage() {
   cat <<'EOF'
 Usage: evals/harness/hypothesis-to-goal.sh [--assert-red] [--seed] HYPOTHESIS.md
 
-Writes goals/<goal_rel>.md under EVALS_ROOT / HERMES_EVALS_ROOT (default ~/.hermes/evals).
+Writes goals/<goal_rel>.md under EVALS_ROOT / HERMES_EVALS_ROOT (default: this evals tree).
 --seed also copies that goal into this hub's goals/ (recipe seed).
 --assert-red runs the harness against the new goal (fixture must exist in the hub).
 EOF
@@ -125,7 +125,10 @@ if [[ -z "${title}" ]]; then
   title="${id}"
 fi
 
-sot="${EVALS_ROOT:-${HERMES_EVALS_ROOT:-${HERMES_EVALS_HOST:-${HOME}/.hermes/evals}}}"
+sot="${EVALS_ROOT:-${HERMES_EVALS_ROOT:-}}"
+if [[ -z "${sot}" || ! -d "${sot}/goals" ]]; then
+  sot="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 out="${sot}/goals/${goal_rel}.md"
 mkdir -p "$(dirname "${out}")"
 

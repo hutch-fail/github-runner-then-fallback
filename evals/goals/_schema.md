@@ -10,7 +10,7 @@ subtree** or **volume mount**. Goals may live in:
 
 | Home | Path shape | Commit? |
 | --- | --- | --- |
-| Optional process SoT | `HERMES_EVALS_ROOT` → project `evals_process/` | No |
+| Override root | `EVALS_ROOT` / `HERMES_EVALS_ROOT` → another evals checkout | Optional |
 | Shared recipe smoke / seed | Recipe `evals/goals` + `fixtures` (incl. `fixture-token-echo*`) | Yes — in canonical `evals` |
 | Product packs | Product repo `evals/goals/github.com/<org>/<repo>/` | Yes — with the product |
 
@@ -42,7 +42,7 @@ Frontmatter `id` must be **flat** (no `/`; used as `runs/<id>/`) and should
 `20260921-platform-github-manage-evals-repo`.
 
 Agents in a product repo with a vendored `evals/`: open `evals/PROCESS.md`.
-Optional bind-mounted scratch SoT: `evals_process/PROCESS.md`.
+Start at `PROCESS.md` in this evals tree.
 
 Every goal body is a specification written before the run. The filled example
 is [`20260918-graft-mini-svc-ab.md`](github.com/hermes/hermes/20260918-graft-mini-svc-ab.md).

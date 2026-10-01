@@ -217,11 +217,7 @@ EOF
     git -C "$path" add -f "$pack_result"
     git -C "$path" commit -m "test(evals): result for ${pack_id}" || true
   fi
-  if ! git_https -C "$path" push -u origin "HEAD:${BRANCH}" --force-with-lease; then
-    log "FAIL  $name push ${BRANCH}"
-    FAIL=1
-    continue
-  fi
+  git_https -C "$path" push -u origin "HEAD:${BRANCH}"
   open_draft_pr "$path" "$name" || { log "FAIL  $name draft PR"; FAIL=1; continue; }
   log "OK    $name on $BRANCH (sync-pull + adapters + draft PR)"
   OK=$((OK + 1))
