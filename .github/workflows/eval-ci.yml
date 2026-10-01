@@ -21,7 +21,7 @@ concurrency:
 jobs:
   eval-ci:
     if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
-    uses: hutch-fail/evals/.github/workflows/eval-ci.ymled45c89c9970e421b702dc32895ccf406567997
+    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@0ed45c89c9970e421b702dc32895ccf406567997
     with:
       evals_path: evals
       hub_ref: 0ed45c89c9970e421b702dc32895ccf406567997
