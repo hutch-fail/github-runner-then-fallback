@@ -18,4 +18,4 @@ SHAs that include unique runner-determination concurrency and the language/gha b
 
 | Criterion | What we look at |
 | --- | --- |
-| Pins | Workflows reference evals@e5b38ac (and sibling hubs when present) |
+| Pins | Workflows reference evals@e3a7201 (and sibling hubs when present) |

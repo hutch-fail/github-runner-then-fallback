@@ -17,8 +17,8 @@ concurrency:
 
 jobs:
   pre-commit:
-    if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
-    uses: hutch-fail/pre-commit/.github/workflows/pre-commit.yml@d200c9aebe47672b5a6f6b696cd05a1cd39f5ec1
+    if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'renovate[bot]'
+    uses: hutch-fail/pre-commit/.github/workflows/pre-commit.yml@dfd996508e0d1d4c06ac904e4ce883600125e0d1
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
