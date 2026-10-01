@@ -25,3 +25,9 @@ Does not prove Meter pin or deleted `ui-design.yml` (consumer follow-up).
 # Next action
 
 Pin consumers; Meter collapse dual UI CI.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

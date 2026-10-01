@@ -23,3 +23,9 @@ Local `check.sh` against the PR branch. Does not prove the org secret is present
 # Next action
 
 Merge the fleet PR once eval-ci is green.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

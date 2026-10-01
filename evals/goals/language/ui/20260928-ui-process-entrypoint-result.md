@@ -36,3 +36,9 @@ contract only); Meter CI still runs the npm gate.
 # Next action
 
 Promote further shared UI rules into `language/ui/` only when org-wide.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

@@ -40,3 +40,9 @@ Empty zero-byte siblings after Apple `patch` are ignored by design.
 # Next action
 
 Ship hub PR (goal+fixture first; this result in a later local commit).
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

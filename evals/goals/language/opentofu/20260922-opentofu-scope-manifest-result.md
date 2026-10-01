@@ -40,3 +40,9 @@ Does not migrate other consumers or enable a required select gate.
 
 Ship hub + platform-github PRs; close #9. Remaining open issue on the hub is #2
 (Make/doctor/secrets) if still desired.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

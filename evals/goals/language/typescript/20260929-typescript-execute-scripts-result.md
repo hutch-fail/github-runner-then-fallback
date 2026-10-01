@@ -25,3 +25,9 @@ Consumers must declare `languages: typescript` and have `node_modules`.
 # Next action
 
 Meter declares `typescript` alongside `ui`.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

@@ -40,3 +40,9 @@ select gate.
 
 Ship hub + service-meter PRs; re-include meter in sync/list (done with
 own-leaf layout).
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |
