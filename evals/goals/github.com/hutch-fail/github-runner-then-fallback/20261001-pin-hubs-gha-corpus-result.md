@@ -6,17 +6,21 @@ status: pass
 
 # Result
 
-Pins bumped to post-gha-corpus / pack-gate hub SHAs (evals@e3a7201, pre-commit when present).
+Pins and pack fixtures hardened: F2P asserts every bumped hub caller; P2P is
+structural (passes on the pre-change tree); goal has Acceptance gates with
+`Set before the run.`
 
 # Proof
 
-- Fixture `check.sh` greps workflows for evals pin `e3a7201ed6e09a1cdc9a02c0e19dcda6848b8d5c`.
-- Thin callers forward `TYPESAFE_API_KEY` so hub Tier2 meta/calibrate can run.
+- `check.sh` requires evals tip `e3a7201ed6e09a1cdc9a02c0e19dcda6848b8d5c` on evals callers and pre-commit tip
+  `dfd996508e0d1d4c06ac904e4ce883600125e0d1` on thin pre-commit callers when present.
+- `p2p-smoke.sh` checks pack/goal/result shape only (no tip SHA assertion).
 
 # Manual verification
 
-None — covered by the hermetic fixture grep on workflow pins.
+None — hermetic fixture greps cover the pin criteria; Kody threads on incomplete
+F2P / non-P2P smoke addressed in this change.
 
 # Next action
 
-None — merge when CI green.
+None.
