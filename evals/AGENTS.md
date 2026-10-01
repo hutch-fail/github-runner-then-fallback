@@ -8,13 +8,16 @@
   skills, schema). A behavior change here is still eval work. Doing only the
   implementation that turns checks green is forbidden. If a goal already covers
   the claim, run it.
-- Author WIP and standing goals in the evals git tree (this hub or a product’s
-  synced/subtree `evals/`). Use `scope: active` for WIP that must not enter
-  default CI select until Adopt; date-prefix product leaves
-  `goals/github.com/<slug>/<repo>/YYYYMMDD-<kebab>.md`. Harness:
-  `make eval/...` here or `make -C evals` from a host.
-- Standing product claims land under that product’s tracked `evals/` (+
-  `docs/goals/` when the project uses NNN-MM), then harvest to this hub.
+- Prefer a personal/process eval workspace under host `~/.hermes/evals`
+  (often bind-mounted into each project as `evals_process/`) for scratch and
+  cross-repo process goals; harness + `make eval/...` stay in this hub (or
+  `make -C evals` from a host). New process goals live at
+  `evals_process/goals/github.com/<slug>/<repo>/YYYYMMDD-<kebab>.md`
+  (date-prefix required). Agents with only product-repo context: start at
+  `evals_process/PROCESS.md`.
+- When a claim should persist with a product, land **in-repo** eval packs under
+  that repository’s own `evals/` (+ `docs/goals/` when that project uses the
+  NNN-MM convention)—not only under `~/.hermes/evals`.
 - Meta (agent-eval / agent-improvement) work goes through `meta-dev` →
   `goal-author` → `goal-develop`|`goal-solve` → `goal-judge` (Cursor rule
   `.cursor/rules/meta-dev.mdc`); never weaken evals or adopt tools without a
@@ -46,9 +49,9 @@
   `run_*_bars`; consumers opt in via `evals/scope.yaml` `languages:`. See
   `docs/scoping.md` § Ratchet. Do not add per-product UI workflows that
   duplicate `eval/bars`.
-- Goals/fixtures/runs live in the evals git tree (`EVALS_ROOT` /
-  `HERMES_EVALS_ROOT` override). Products sync/subtree/mount this hub at
-  `evals/`; do not use a home-directory process SoT.
+- Process evals SoT is host `~/.hermes/evals` (`EVALS_ROOT` /
+  `HERMES_EVALS_ROOT`). Leaf name **`evals_process`** avoids colliding with a
+  product’s tracked **`evals/`** (often this hub as a git subtree).
 - Dynamic agent-solver (TB2a): `make eval/solve` / skill **goal-solve** runs a
   goal’s `solver_bin` (coding-agent CLIs or a fixture mock `.sh`) in a fixture
   copy, then the same F2P/P2P shell checks; the harness does not call LLM

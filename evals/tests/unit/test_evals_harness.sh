@@ -76,7 +76,7 @@ if ! grep -q 'HERMES_EVAL_REPO_ROOT' "${cli}"; then
   fail=1
 fi
 if ! grep -qE 'EVALS_ROOT|HERMES_EVALS_ROOT|resolve_evals_dir' "${cli}"; then
-  printf '✗ goal.sh must resolve EVALS_ROOT / HERMES_EVALS_ROOT\n' >&2
+  printf '✗ goal.sh must resolve EVALS_ROOT / HERMES_EVALS_ROOT / host SoT\n' >&2
   fail=1
 fi
 
@@ -84,16 +84,8 @@ if ! grep -qE 'github.com/<slug>|github.com/<org>' "${ROOT}/README.md"; then
   printf '✗ README.md must document github.com/<org>/<repo> mirror layout\n' >&2
   fail=1
 fi
-if ! grep -qE 'EVALS_ROOT|this evals|sync/subtree' "${ROOT}/README.md"; then
-  printf '✗ README.md must document EVALS_ROOT / evals git tree as goals home\n' >&2
-  fail=1
-fi
-if grep -qE '~/.hermes/evals' "${ROOT}/README.md"; then
-  printf '✗ README.md must not document ~/.hermes/evals as SoT\n' >&2
-  fail=1
-fi
-if grep -qE '~/.hermes/evals' "${cli}"; then
-  printf '✗ goal.sh must not default to ~/.hermes/evals\n' >&2
+if ! grep -qE 'EVALS_ROOT|HERMES_EVALS_HOST|~/.hermes/evals' "${ROOT}/README.md"; then
+  printf '✗ README.md must document host ~/.hermes/evals SoT\n' >&2
   fail=1
 fi
 
@@ -132,7 +124,7 @@ if grep -Eq 'incus|ensure_incus|guest_as_user|INSTANCE_NAME' "${ROOT}/harness/li
 fi
 
 export HERMES_EVAL_RUNS="${runs}/unit-test-$$"
-# Pin SoT to this hub so an alternate tree cannot shadow CI.
+# Pin SoT to this hub so a partial ~/.hermes/evals on the laptop cannot shadow CI.
 export HERMES_EVALS_ROOT="${ROOT}"
 export EVALS_ROOT="${ROOT}"
 mkdir -p "${HERMES_EVAL_RUNS}"

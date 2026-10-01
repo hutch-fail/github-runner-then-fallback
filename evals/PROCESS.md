@@ -6,6 +6,7 @@ This file ships inside the shared `evals` hub (org **file sync** primary; git
 | Path in a product workspace | What it is | Commit to the product repo? |
 | --- | --- | --- |
 | `evals/` (sync / subtree / mount) | Shared harness, skills, templates, methodology + product claim packs | **Yes** for product goals/fixtures under `evals/goals/github.com/<org>/<repo>/` (harvest to hub for org SoT — [`docs/syncing.md`](docs/syncing.md)) |
+| `evals_process/` (optional bind) | Host scratch SoT (`~/.hermes/evals`) | **No** (gitignored) |
 
 This hub owns `make eval/…`, `harness/`, and `skills/`. From a host project:
 
@@ -76,12 +77,12 @@ make -C evals eval/assert-red GOAL=github.com/<org>/<repo>/YYYYMMDD-<kebab>
 
 ## Distribution
 
-- **Sync / subtree (primary):** vendor this hub into `<product>/evals/`. Product PRs
+- **Subtree (primary):** vendor this hub into `<product>/evals/`. Product PRs
   carry harness/skill updates (when pulled) and product goals.
 - **Volume mount:** mount the shared hub at `evals/`; still commit durable
   product packs into the product repo’s tracked tree when the bar should ship.
-- **WIP / active:** author on a feature branch under this same `evals/` git tree
-  (`scope: active` stays out of default CI select until Adopt).
+- **Personal SoT:** leave scratch under `~/.hermes/evals` / `evals_process/`;
+  do not treat it as the long-term home for product bars.
 
 See [`docs/consuming.md`](docs/consuming.md).
 

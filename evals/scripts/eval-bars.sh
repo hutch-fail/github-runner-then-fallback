@@ -347,9 +347,21 @@ run_typescript_bars() {
   bash "${check}"
 }
 
+scope_lists_language() {
+  local scan_root="$1" lang="$2" manifest
+  manifest="$(resolve_manifest "${scan_root}")"
+  [[ -n "${manifest}" && -f "${manifest}" ]] || return 1
+  grep -qE "^[[:space:]]*-[[:space:]]*${lang}[[:space:]]*$|languages:.*${lang}" "${manifest}"
+}
+
 run_ui_bars() {
   local kit="$1" scan_root="$2"
   local check rc=0
+  # Kit sync touches language/ui paths; only UI consumers (languages: ui) run product bars.
+  if [[ -f "${scan_root}/evals/scope.yaml" ]] && ! scope_lists_language "${scan_root}" "ui"; then
+    printf 'ui_bars_skip reason=scope_languages_omit_ui root=%s\n' "${scan_root}"
+    return 0
+  fi
   warn_if_manifest_omits "${scan_root}" "ui"
 
   export HERMES_EVAL_SCAN_ROOT="${scan_root}"

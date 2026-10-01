@@ -38,7 +38,7 @@ not that agent.
 | Home | What lives there | Commit? |
 | --- | --- | --- |
 | **This hub (kit + seed)** | `harness/`, `skills/`, schema, smoke goals/fixtures, docs, Make API | Yes — in this repo; consumers vendor via subtree/mount |
-| **WIP (`scope: active`)** | Feature-branch packs under this evals git tree; skipped by default select until Adopt | Yes — in git; not standing CI until promoted |
+| **Process SoT (`~/.hermes/evals` → `evals_process/`)** | Scratch / cross-repo process goals while iterating | No — host/personal; gitignored via `evals_process` when bind-mounted |
 | **Product packs (often the same subtree)** | Durable claim packs for that product under `evals/goals/github.com/…` | Yes — when the bar should survive with the app |
 
 ## Product goal paths (required)
@@ -81,7 +81,7 @@ EVALS_ROOT="$PWD/evals" bash evals/harness/goal.sh assert-red fixture-token-echo
 ```
 
 `EVALS_ROOT` (preferred) / `HERMES_EVALS_ROOT` select the goals/fixtures/runs
-tree (default: this evals git tree — hub or product sync/subtree/mount).
+tree (default: `~/.hermes/evals` if seeded, else this hub).
 `HERMES_EVAL_REPO_ROOT` is set by the harness to the repository that contains
 the hub (subtree parent when the hub directory is named `evals`).
 

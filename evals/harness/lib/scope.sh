@@ -213,8 +213,9 @@ validate_goal_scope() {
       fi
       ;;
     active)
-      # WIP lifecycle marker inside evals git; list/select skip unless
-      # EVALS_INCLUDE_ACTIVE=1 or the goal is named explicitly.
+      if _hermes_eval_under_recipe_goals "${file}"; then
+        die "${file}: scope: active is not allowed under product/recipe evals/goals/"
+      fi
       ;;
   esac
 

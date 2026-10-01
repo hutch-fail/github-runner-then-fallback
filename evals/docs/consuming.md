@@ -57,10 +57,12 @@ eval/%:
 	@$(MAKE) -C evals $@
 ```
 
-## WIP / active goals
+## Personal process SoT
 
-Author experiments on a feature branch under this `evals/` tree (`scope: active` is skipped by default `list`/`select` until Adopt). Do not use a home-directory process SoT.
-
+Scratch / cross-repo goals may live under `~/.hermes/evals` (`EVALS_ROOT` /
+`HERMES_EVALS_ROOT`). Hermes may bind that tree as `evals_process/`. Durable
+product bars belong under this hub’s `goals/github.com/<org>/<repo>/` inside the
+product repo.
 
 ## Pre-commit / CI on the host
 
@@ -133,4 +135,4 @@ call this target from that script.
 3. Point seed / `assert_layout` at the subtree.
 4. Stop duplicating the seven skills under `config/guest/skills` — symlink or
    bind from `evals/skills`.
-5. Keep Incus disk binds for the org checkout (so guest sees the same `evals/` git tree).
+5. Keep Incus disk binds and `evals_process/` personal SoT in Hermes.

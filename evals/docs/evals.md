@@ -31,8 +31,11 @@ Public API: `make eval/assert-red`, `make eval/verify`, `make eval/solve`,
 `make -C evals eval/…`. CLI skill: `goal`. Hypothesis drafts:
 `docs/hypothesis-playground.md`. Consumer install: `docs/consuming.md`.
 
-Goals/fixtures/runs live in this evals git tree. Override with `EVALS_ROOT` / `HERMES_EVALS_ROOT` when pointing the harness at another checkout. This hub keeps the harness, skills, and goals/fixtures for CI and sync to products.
-
+**Personal goals/fixtures/runs** (optional) live under `EVALS_ROOT` /
+`HERMES_EVALS_ROOT` (default `~/.hermes/evals` on the host). This hub keeps the
+harness, skills, and a seed copy of goals/fixtures for CI. Hermes (or similar)
+may bind-mount the personal tree into each project as `evals_process/` (not
+symlinks).
 
 New process goals live under `goals/github.com/<slug>/` (mirrors typical guest
 mounts such as `/home/ubuntu/github.com/<slug>/`).
