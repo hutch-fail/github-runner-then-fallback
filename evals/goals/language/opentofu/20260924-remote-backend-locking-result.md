@@ -33,3 +33,9 @@ Product enforcement via `scripts/pre-commit-eval-opentofu.sh` is covered by
 # Next action
 
 Wire the pre-commit hook on `platform-github`, then other TF-bearing `platform-*`.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

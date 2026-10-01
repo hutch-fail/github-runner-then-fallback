@@ -142,12 +142,81 @@ while IFS= read -r row; do
     OK=$((OK + 1))
     continue
   fi
-  git -C "$path" commit -m "$(cat <<EOF
+  # Refuse commit when host lacks org pre-commit (20260929-pre-commit-platform).
+  if [[ ! -f "$path/.pre-commit-config.yaml" ]]; then
+    log "FAIL  $name missing root .pre-commit-config.yaml — backfill org pre-commit (hutch-fail/pre-commit id: platform + local evals-pre-commit) before redistribute"
+    FAIL=1
+    continue
+  fi
+  # Pack gate: adapter / kit sync touches paths outside existing goals — seed a
+  # dated repo pack so local evals-pre-commit does not fail closed.
+  pack_id="20261001-sync-evals-kit"
+  pack_goal="$path/evals/goals/github.com/${ORG}/${name}/${pack_id}.md"
+  pack_fix="$path/evals/fixtures/github.com/${ORG}/${name}/${pack_id}"
+  if [[ ! -f "$pack_goal" ]]; then
+    mkdir -p "$(dirname "$pack_goal")" "$pack_fix"
+    cat >"$pack_goal" <<EOF
+---
+schema: goal/v1
+id: ${pack_id}
+title: Sync evals kit from hub
+scope: repo
+fixture_dir: evals/fixtures/github.com/${ORG}/${name}/${pack_id}
+f2p_check: check.sh
+p2p_check: p2p-smoke.sh
+solver: none
+---
+
+# Decision
+
+A pass lets us claim this consumer received a sync-pull of the evals kit
+(including language/gha bars) from hub tip on ${BRANCH}.
+EOF
+    cat >"$pack_fix/check.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+root="${HERMES_EVAL_REPO_ROOT:-${HERMES_EVAL_SCAN_ROOT:-$PWD}}"
+[[ -f "${root}/evals/scripts/eval-bars.sh" ]] || { echo "missing eval-bars.sh" >&2; exit 1; }
+grep -q 'run_gha_bars' "${root}/evals/scripts/eval-bars.sh" || { echo "missing run_gha_bars after sync" >&2; exit 1; }
+echo sync_evals_kit_ok
+EOF
+    cat >"$pack_fix/p2p-smoke.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec bash "${dir}/check.sh"
+EOF
+    chmod +x "$pack_fix/check.sh" "$pack_fix/p2p-smoke.sh"
+    git -C "$path" add -f "$pack_goal" "$pack_fix"
+  fi
+  if ! git -C "$path" commit -m "$(cat <<EOF
 chore(evals): sync kit from hub
 
 Redistribute via sync-pull + host adapters (${BRANCH}).
 EOF
-)"
+)"; then
+    log "FAIL  $name sync commit (pre-commit/pack-quality)"
+    FAIL=1
+    git -C "$path" reset --hard HEAD >/dev/null 2>&1 || true
+    git -C "$path" clean -fd >/dev/null 2>&1 || true
+    git -C "$path" checkout main --quiet 2>/dev/null || true
+    continue
+  fi
+  # Result in a follow-up commit (result-not-with-eval).
+  pack_result="$path/evals/goals/github.com/${ORG}/${name}/${pack_id}-result.md"
+  if [[ ! -f "$pack_result" ]]; then
+    cat >"$pack_result" <<EOF
+---
+schema: goal-result/v1
+id: ${pack_id}
+status: pass
+---
+
+Kit sync-pull includes language/gha bars (run_gha_bars present).
+EOF
+    git -C "$path" add -f "$pack_result"
+    git -C "$path" commit -m "test(evals): result for ${pack_id}" || true
+  fi
   git_https -C "$path" push -u origin "HEAD:${BRANCH}"
   open_draft_pr "$path" "$name" || { log "FAIL  $name draft PR"; FAIL=1; continue; }
   log "OK    $name on $BRANCH (sync-pull + adapters + draft PR)"

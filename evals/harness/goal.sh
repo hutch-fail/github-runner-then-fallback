@@ -299,7 +299,7 @@ write_manifest() {
     printf '\n}\n'
   } > "${run_dir}/manifest.json"
   python3 "${harness_dir}/lib/write_result.py" \
-    "${repo_root}/evals/templates/result.md" \
+    "${repo_evals}/templates/result.md" \
     "${run_dir}/manifest.json" \
     "${run_dir}/result.md"
 }

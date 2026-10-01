@@ -39,3 +39,9 @@ scan workflows outside the caller’s top-level `.github/workflows`.
 
 Enable `gha` pre-commit family on product repos that ship workflows; migrate
 callers from raw `secrets.GH_APP_*` to OP load pattern per goal decision.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

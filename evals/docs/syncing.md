@@ -99,9 +99,11 @@ make sync/ship-land CONSUMERS_ROOT="$HOME/github.com/hutch-fail"   # reset+redis
 make sync/doctor CONSUMERS_ROOT="$HOME/github.com/hutch-fail"
 ```
 
-Skill: `evals-org-redistribute`. Fail closed on dirty trees. Draft PRs skip
-eval-ci/pre-commit until ready-for-review. Kit-only syncs rely on consumer
-`evals/**` paths-ignore for pre-commit (do not use `[skip ci]`).
+Skill: `evals-org-redistribute`. Fail closed on dirty trees. Fail closed when
+a consumer lacks root `.pre-commit-config.yaml` (universe
+`20260929-pre-commit-platform` — backfill org pre-commit before redistribute).
+Draft PRs skip eval-ci/pre-commit until ready-for-review. Kit-only syncs rely
+on consumer `evals/**` paths-ignore for pre-commit (do not use `[skip ci]`).
 
 ## Why not subtree-only?
 

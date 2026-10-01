@@ -94,7 +94,7 @@ Operator pointer: [`docs/evals.md`](docs/evals.md). Hypothesis loop:
 evals/   (this repo, or <project>/evals after subtree)
 ├── README.md PROCESS.md AGENTS.md Makefile
 ├── harness/                 # goal.sh + solver helpers
-├── skills/                  # goal*, meta-dev, hypothesis-playground
+├── skills/                  # goal*, meta-dev, build-eval, hillclimb, …
 ├── .cursor/skills → skills/ # hub-as-repo adapters
 ├── .agents/skills → skills/
 ├── docs/
@@ -112,10 +112,13 @@ evals/   (this repo, or <project>/evals after subtree)
 | **goal-author** | Write goals + fixtures; `assert-red` until certified |
 | **goal-develop** | Implement in scope only; never weaken evals |
 | **goal-solve** | TB2a: `assert-red` then solve (`solver: agent`) |
-| **goal-judge** | Static verify / solve / run / report; fail closed |
+| **goal-judge** | Static verify / solve / run / report; fail closed; result + proof |
+| **build-eval** | Design packs (executive voice → assert-red) |
+| **hillclimb** | Optimize with train/test; result + proof snippets |
 | **goal** | Low-level harness CLI shim |
 
 Cursor rule: `.cursor/rules/meta-dev.mdc`. Agent prefs: [`AGENTS.md`](AGENTS.md).
+Pack-quality ratchet: [`docs/meta-eval-quality.md`](docs/meta-eval-quality.md).
 
 ## TB1 smoke / TB2a
 

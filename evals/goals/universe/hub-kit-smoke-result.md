@@ -16,3 +16,9 @@ None.
 | Question | What this run shows | Requirement | Result |
 | --- | --- | --- | --- |
 | Pack files on the branch? | Fixture, goal, and result added | All three present | Met |
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

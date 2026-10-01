@@ -1,7 +1,6 @@
 # Thin caller — implementation lives in hutch-fail/evals (reusable workflow).
 # Pin hub_ref to the same commit/tag as uses: @pin.
-# Pass OP_SERVICE_ACCOUNT_TOKEN so the reusable can load App credentials from
-# 1Password and clone private hutch-fail/evals.
+# Pass OP_SERVICE_ACCOUNT_TOKEN (1Password → App credentials) so the reusable can clone private hutch-fail/evals.
 name: eval-ci
 
 on:
@@ -21,10 +20,10 @@ concurrency:
 jobs:
   eval-ci:
     if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
-    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@e3a7201ed6e09a1cdc9a02c0e19dcda6848b8d5c
+    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@113c4ed4840ed81cc5c4e319eb21c9eeeefc6baf
     with:
       evals_path: evals
-      hub_ref: e3a7201ed6e09a1cdc9a02c0e19dcda6848b8d5c
+      hub_ref: 113c4ed4840ed81cc5c4e319eb21c9eeeefc6baf
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}

@@ -16,3 +16,9 @@ fallback-on-error → Blacksmith).
 # Blocking findings
 
 None for the wiring claim.
+
+# Manual verification
+
+| Ran by hand | Observed | Automated check | Tier |
+| --- | --- | --- | --- |
+| None — evals kit redistribute | N/A | eval-ci result gate (PROCESS.md) | hermetic |

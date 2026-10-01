@@ -2,6 +2,29 @@
 
 SoT and operator docs live under [`README.md`](../README.md).
 
+## CI/CD onboarding (executive DX)
+
+1. Developer starts a **new repository**.
+2. The repo **opts into evals** (kit + host adapters so `eval/bars` runs on
+   PRs — sync/pull / `install-host-adapters`).
+3. On the **next PR**, universe bars fail closed if org **pre-commit** is
+   missing (`20260929-pre-commit-platform`: `hutch-fail/pre-commit` `id: platform`
+   + local `evals-pre-commit`). Backfill the canonical config → green.
+4. **Always-on CI onboarding law** stays **universe** (`goals/universe/` +
+   `run_universe_bars`) so every recipe consumer fails closed after
+   redistribute with no second opt-in (pre-commit platform, no raw
+   `GH_APP_*` Actions secrets, pack-quality).
+5. **Workflow / SDLC hygiene** that should fire when CI files change lives
+   under **`language/gha`** (`goals/language/gha/` + `run_gha_bars`). Path
+   detect (`.github/workflows/**`, `.github/actions/**`) or
+   `languages: [gha]` (alias `ci` → `gha`). Hub PR → `sync/redistribute` →
+   consumers pick up the bar; the product PR lands the config. Keep true
+   must-apply-to-all law on universe; do not dump every GHA guideline into
+   always-on universe.
+
+`install-host-adapters` places the thin eval-ci host stub so PRs can run
+bars after opt-in; keep that stub when syncing.
+
 Public API: `make eval/assert-red`, `make eval/verify`, `make eval/solve`,
 `make eval/ab`, `make eval/parse`, `make eval/run`, `make eval/report`
 (`GOAL=…`). From a host project with this tree at `./evals`, use
@@ -18,7 +41,9 @@ New process goals live under `goals/github.com/<slug>/` (mirrors typical guest
 mounts such as `/home/ubuntu/github.com/<slug>/`).
 
 Meta loop (author → develop|solve → judge): skills `meta-dev`, `goal-author`,
-`goal-develop`, `goal-solve`, `goal-judge`; Cursor rule `.cursor/rules/meta-dev.mdc`.
+`goal-develop`, `goal-solve`, `goal-judge`, plus process skills `build-eval` and
+`hillclimb`; Cursor rule `.cursor/rules/meta-dev.mdc`. Pack-quality ratchet:
+[`meta-eval-quality.md`](meta-eval-quality.md).
 
 A fixture with `check.sh` needs a goal whose `fixture_dir` points at it
 (local pre-commit `eval-has-goal`). Commit `<goal>-result.md` in a later local
@@ -33,8 +58,14 @@ check and a pre-run goal already on the branch. It does not require
 fixture, the goal, and the result before merge. `tests/unit/` and `runs/` do
 not count. If a goal already covers the change, run it. Doing only the
 implementation that turns checks green is forbidden. See [`README.md`](../README.md).
-Dependabot (`dependabot[bot]`) skips eval-ci — version bumps are not
-behavior PRs; use `make sync-dependabot` (with an eval pack) for policy YAML.
+Dependabot (`dependabot[bot]`) and Renovate (`renovate[bot]`) skip eval-ci —
+version bumps are not behavior PRs; use `make sync-dependabot` (with an eval
+pack) for policy YAML. The pack gate (`pr-has-eval-pack`) also skips when every
+changed path outside `evals/` is a **dependency bump only**: known lockfiles
+(`poetry.lock`, `package-lock.json`, …) or pin-only edits in
+`.github/workflows/*` and `.github/actions/**` (`uses: …@`, `hub_ref:`, `rev:`).
+Workflow logic changes still need an eval pack; pin bumps may still run
+`language/gha` bars when those paths change.
 
 ## Host consumer (subtree / mount at `evals/`)
 
@@ -95,28 +126,45 @@ Behavior today:
 
 | Trigger | Family | Bars run |
 | --- | --- | --- |
-| (always) | `universe` | No raw `secrets.GH_APP_ID` / `GH_APP_PRIVATE_KEY` (`20260924-no-gha-app-actions-secrets`) |
+| (always) | `universe` | No raw `secrets.GH_APP_ID` / `GH_APP_PRIVATE_KEY` (`20260924-no-gha-app-actions-secrets`); org pre-commit platform + evals-pre-commit (`20260929-pre-commit-platform`); pack-quality ratchet Tier1–3 (`20260929-meta-eval-pack-quality` — see [`meta-eval-quality.md`](meta-eval-quality.md)) |
 | `*.tf` / `*.tf.json` | `opentofu` | Remote-backend language bar (`20260924-remote-backend-locking`) |
-| `*.ts` / `*.tsx` / `tsconfig.json` | `typescript` | Stub (family detected; no language bar yet) |
-| `design/**`, `docs/design-system/**`, `docs/north-star/**`, `evals/ui/**`, `scripts/ui-*`, own-leaf `ui-process` / `ui-jev` / `ui-visual` / `ui-semantic` | `ui` | Scope-manifest + process-entrypoint language bars |
+| `*.ts` / `*.tsx` / `tsconfig.json` or `languages: typescript` | `typescript` | Run `npm run typecheck` / `npm test` when those scripts exist (skip if absent) |
+| `design/**`, `docs/design-system/**`, `docs/north-star/**`, `evals/ui/**`, `scripts/ui-*`, own-leaf `ui-process` / `ui-jev` / `ui-visual` / `ui-semantic`, or `languages: ui` | `ui` | Scope-manifest + process-entrypoint; execute `ui:docs` / `ui:lint` / `ui:process` when present; optional `ui:jev` when script + `TYPESAFE_API_KEY` exist |
+| `ansible/**`, `*/ansible/**`, `ansible.cfg`, `*/ansible.cfg` | `ansible` | Single-converge playbook bar (`20260929-ansible-single-converge`) |
+| `.github/workflows/**`, `.github/actions/**`, or `languages: gha` (alias `ci`) | `gha` | CI/CD / GitHub Actions hygiene (seed: unique `runner-determination` concurrency — `20261001-unique-runner-determination`) |
 
 Language ids for `evals/scope.yaml` / select: `opentofu`, `typescript`,
-`python`, `ui` — see [`scoping.md`](scoping.md) registry. `eval/select` is
+`python`, `ui`, `ansible`, `gha` — see [`scoping.md`](scoping.md) registry
+(ratchet: detect → language bars → optional repo). `eval/select` is
 declaration-only. `eval/bars` selects language families from (1) `languages:`
 in the consumer manifest (so CI / `make eval/bars` with no path args still
-runs declared UI/OpenTofu bars), (2) changed path args (pre-commit), and
-(3) `HERMES_EVAL_FORCE_FAMILIES`. Path-detect still **warns** when paths imply
-`ui` / `opentofu` but the manifest omits that id. Do **not** treat `src/**`
-alone as org-wide `ui` (too broad).
+runs declared UI/OpenTofu/TypeScript/Ansible/`gha` bars), (2) changed path
+args (pre-commit and `ci-eval-bars` PR diffs), and (3)
+`HERMES_EVAL_FORCE_FAMILIES` (`ci` aliases to `gha`). Path-detect still
+**warns** when paths imply `ui` / `opentofu` / `ansible` / `gha` but the
+manifest omits that id. Do **not** treat `src/**` alone as org-wide `ui`
+(too broad). Do **not** treat bare `*.yml` as org-wide `ansible`.
 
-New UI/UX consumers: declare `languages: [ui]`, keep process fixtures under
-own-leaf `ui-process/` (or legacy `evals/ui/`), expose `npm run ui:process` or
-`scripts/ui-process-check.*`. Shared bars then apply via `eval-ci` /
-`make eval/bars` without a product-specific bars job. Node/Jev-heavy gates stay
-optional product workflows.
+New UI/UX consumers: declare `languages: [ui]` (add `typescript` when
+typecheck/vitest should ride the same rail), keep process fixtures under
+own-leaf `ui-process/` (or legacy `evals/ui/`), expose `npm run ui:process`
+(and usually `ui:docs` / `ui:lint`). Shared bars run those scripts via
+`eval-ci` / `make eval/bars` — **do not** add a second product workflow such
+as `ui-design.yml`. When `ui:jev` exists, CI must pass secret
+`TYPESAFE_API_KEY` into eval-ci; missing key fails closed outside pre-commit.
+Local `PRE_COMMIT=1` skips Jev when the key is unset (deterministic ui:lint
+stays on pre-commit). Missing `node_modules` with declared `ui:*` /
+`typecheck` scripts fails with an `npm ci` hint (laptop / pre-commit).
 
 Universe bars always run against `HERMES_EVAL_SCAN_ROOT` (default cwd).
-Extend `scripts/eval-bars.sh` when adding new families.
+**Growth rails:**
+- **Universe** — must-apply-to-all onboarding (`goals/universe/` +
+  `run_universe_bars`).
+- **`language/gha`** — workflow/SDLC hygiene when CI files change
+  (`goals/language/gha/` + `run_gha_bars`). Seed bars are deterministic;
+  later packs may be Jev-, LLM-, or manual-verification-shaped under the
+  same family. Redistribute after hub merge so consumers fail closed on the
+  next workflow-touching PR.
 
 Rule A for remote-backend: fail `backend "local"` and missing backend; pass any
 non-local backend type (including partial `backend "s3" {}`).

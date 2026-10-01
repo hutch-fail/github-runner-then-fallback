@@ -8,13 +8,26 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Prefer explicit scan root (product pre-commit). Else fixture cwd if it has .tf.
 # Else HERMES_EVAL_REPO_ROOT (consumer product).
+#
+# Skip kit / recipe trees under the product root: vendored evals/, CI hub clone
+# .evals-hub/, and Terraform's own .terraform/ — otherwise language fixtures
+# (intentionally backend "local") false-fail product bars when CI checks out
+# the hub into the workspace.
+tf_find() {
+  local root="$1"
+  find "${root}" \( -name '*.tf' -o -name '*.tf.json' \) \
+    ! -path '*/.terraform/*' \
+    ! -path '*/evals/*' \
+    ! -path '*/.evals-hub/*' \
+    2>/dev/null
+}
+
 resolve_scan_root() {
   if [[ -n "${HERMES_EVAL_SCAN_ROOT:-}" && -d "${HERMES_EVAL_SCAN_ROOT}" ]]; then
     printf '%s\n' "$(cd "${HERMES_EVAL_SCAN_ROOT}" && pwd)"
     return 0
   fi
-  if find "${here}" \( -name '*.tf' -o -name '*.tf.json' \) \
-    ! -path '*/.terraform/*' ! -path '*/evals/*' 2>/dev/null | grep -q .; then
+  if tf_find "${here}" | grep -q .; then
     printf '%s\n' "${here}"
     return 0
   fi
@@ -29,23 +42,19 @@ resolve_scan_root() {
 # Print backend types found under root (one per line). Empty if none.
 # Ignores # line comments. Matches backend "TYPE" or backend 'TYPE'.
 collect_backend_types() {
-  local root="$1"
-  find "${root}" \( -name '*.tf' -o -name '*.tf.json' \) \
-    ! -path '*/.terraform/*' ! -path '*/evals/*' -print0 2>/dev/null \
-    | while IFS= read -r -d '' f; do
-        # Strip line comments then extract backend type tokens.
-        sed 's/#.*//' "${f}" \
-          | tr '\n' ' ' \
-          | grep -oE 'backend[[:space:]]+("[^"]+"|'\''[^'\'']+'\'')' \
-          | sed -E 's/.*["'\'']([^"'\'']+)["'\''].*/\1/' || true
-      done
+  local root="$1" f
+  while IFS= read -r f; do
+    [[ -n "${f}" ]] || continue
+    # Strip line comments then extract backend type tokens.
+    sed 's/#.*//' "${f}" \
+      | tr '\n' ' ' \
+      | grep -oE 'backend[[:space:]]+("[^"]+"|'\''[^'\'']+'\'')' \
+      | sed -E 's/.*["'\'']([^"'\'']+)["'\''].*/\1/' || true
+  done < <(tf_find "${root}")
 }
 
 root="$(resolve_scan_root)"
-mapfile -t tf_files < <(
-  find "${root}" \( -name '*.tf' -o -name '*.tf.json' \) \
-    ! -path '*/.terraform/*' ! -path '*/evals/*' 2>/dev/null | sort
-)
+mapfile -t tf_files < <(tf_find "${root}" | sort)
 
 if [[ "${#tf_files[@]}" -eq 0 ]]; then
   printf 'error: no *.tf under %s — cannot assert remote backend\n' "${root}" >&2

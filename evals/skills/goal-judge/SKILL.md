@@ -19,7 +19,16 @@ make eval/run GOAL=<id>
 make eval/report GOAL=<id>
 ```
 
-- **Harness pass:** manifest `verdict=pass`. Write `<goal>-result.md` beside the goal, in the shape of `goals/github.com/hermes/hermes/20260918-graft-mini-svc-ab-result.md`. The harness copy under `runs/` is not that file. The report may still say Hold or Inconclusive. Do not read a harness pass as Adopt. A green check with no result file beside the goal is not done. Commit the result in a later local commit, not with the goal or the fixture (`result-not-with-eval`). Both commits may be in one pull request. Squash or merge may combine them. Do not say an agent used a tool unless that agent was started in the runtime under test. A config file, a throwaway projector run, or a library script is not that agent.
+- **Harness pass:** manifest `verdict=pass`. Write `<goal>-result.md` beside the
+  goal (`templates/result.md` shape). Lead with Adopt / Hold / Inconclusive.
+  Include a **Proof** section with at least one fenced or quoted harness snippet
+  (`make eval/assert-red` / `verify` / `bars` exits, key check lines, score
+  deltas). The harness copy under `runs/` is not that file. Do not read a
+  harness pass as Adopt. A green check with no result file beside the goal is
+  not done. Commit the result in a later local commit, not with the goal or the
+  fixture (`result-not-with-eval`). Both commits may be in one pull request.
+  Squash or merge may combine them. Do not say an agent used a tool unless that
+  agent was started in the runtime under test.
 - **Fail:** any non-pass — return manifest path; do not claim success
 
 ## Agent solver path (TB2a)
@@ -49,7 +58,9 @@ make eval/report GOAL=<id>
 ## Soft LLM rubrics (not implemented)
 
 Trajectory / rubric scoring as pass criteria is **out of scope** (TB2b). Do not
-invent rubric grades. Say hard checks only.
+invent rubric grades. Say hard checks only. Tier-3 LiteLLM in the universe
+pack-quality ratchet grades **eval pack** quality only — see
+`docs/meta-eval-quality.md`.
 
 ## Forbidden
 
@@ -59,6 +70,6 @@ invent rubric grades. Say hard checks only.
 
 ## Related
 
-- Prior: **goal-develop** or **goal-solve**
+- Prior: **goal-develop**, **goal-solve**, or **hillclimb**
 - CLI: **goal**
 - Orchestrator: **meta-dev**
