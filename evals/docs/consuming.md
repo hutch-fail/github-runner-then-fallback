@@ -89,11 +89,15 @@ jobs:
       hub_ref: <pin>
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      # Optional: language/ui ui:jev (fail closed when script present without key)
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
 ```
 
 Prefer `eval-ci.yml` (select then pack). Deprecated: pack gate
 (`eval-pack-gate.yml`) and select-only (`eval-select.yml`) — same
-`OP_SERVICE_ACCOUNT_TOKEN`. Make-only select: `evals-make-select.yml`. Thin
+`OP_SERVICE_ACCOUNT_TOKEN`. When `languages:` includes `ui` or `typescript`
+and the caller has `package.json`, eval-ci runs `setup-node` + `npm ci` before
+bars. Make-only select: `evals-make-select.yml`. Thin
 callers pin the **same** commit/tag on `uses: @…` and `hub_ref` so scripts load
 from the hub (stale product `evals/` subtrees are fine). Caller workspace alone
 is enough for pack *diff* assertions (`EVALS_PACK_ROOT`), but select+assert

@@ -104,17 +104,52 @@ missing_kinds() {
   fi
 }
 
+# A result must say which checks were run by hand and which automated check now
+# covers each (PROCESS.md "Manual verification becomes a test"). Only results
+# added/changed in the diff are checked, so existing results are grandfathered.
+result_has_manual_section() {
+  awk '
+    { l = tolower($0) }
+    l ~ /^#+[[:space:]]+manual verification/ { in_sec = 1; next }
+    in_sec && /^#+[[:space:]]/ { exit }
+    in_sec && $0 ~ /[^[:space:]]/ { body = 1 }
+    END { exit !(in_sec && body) }
+  ' "$1"
+}
+
+result_content_problems() {
+  local mode="$1" path
+  shift
+  [[ "${mode}" == "ci" ]] || return 0
+  for path in "$@"; do
+    [[ -n "${path}" ]] || continue
+    is_result "${path}" || continue
+    [[ -f "${ROOT}/${path}" ]] || continue
+    result_has_manual_section "${ROOT}/${path}" || printf '%s\n' "${path}"
+  done
+}
+
 report_missing() {
   local mode="$1"
   shift
-  local missing kind
+  local missing bad_results kind path
   missing="$(missing_kinds "${mode}" "$@")"
-  [[ -n "${missing}" ]] || return 0
-  printf '%s\n' '✗ pull request changes code without an eval pack' >&2
-  while IFS= read -r kind; do
-    [[ -n "${kind}" ]] || continue
-    printf '  missing: %s\n' "${kind}" >&2
-  done <<<"${missing}"
+  bad_results="$(result_content_problems "${mode}" "$@")"
+  [[ -n "${missing}" || -n "${bad_results}" ]] || return 0
+  if [[ -n "${missing}" ]]; then
+    printf '%s\n' '✗ pull request changes code without an eval pack' >&2
+    while IFS= read -r kind; do
+      [[ -n "${kind}" ]] || continue
+      printf '  missing: %s\n' "${kind}" >&2
+    done <<<"${missing}"
+  fi
+  if [[ -n "${bad_results}" ]]; then
+    printf '%s\n' '✗ result lacks a non-empty "# Manual verification" section (PROCESS.md: Manual verification becomes a test)' >&2
+    while IFS= read -r path; do
+      [[ -n "${path}" ]] || continue
+      printf '  result: %s\n' "${path}" >&2
+    done <<<"${bad_results}"
+  fi
   return 1
 }
 
@@ -181,19 +216,19 @@ EOF
     cat >"${good}" <<'EOF'
 docs/evals.md
 skills/goal/SKILL.md
-fixtures/github.com/hermes/hermes/20260919-pr-eval-pack/check.sh
-goals/github.com/hermes/hermes/20260919-pr-eval-pack.md
-goals/github.com/hermes/hermes/20260919-pr-eval-pack-result.md
+fixtures/github.com/hermes/hermes/20260919-selftest-pack/check.sh
+goals/github.com/hermes/hermes/20260919-selftest-pack.md
+goals/github.com/hermes/hermes/20260919-selftest-pack-result.md
 EOF
     cat >"${prerun}" <<'EOF'
 skills/goal/SKILL.md
-fixtures/github.com/hermes/hermes/20260919-pr-eval-pack/check.sh
-goals/github.com/hermes/hermes/20260919-pr-eval-pack.md
+fixtures/github.com/hermes/hermes/20260919-selftest-pack/check.sh
+goals/github.com/hermes/hermes/20260919-selftest-pack.md
 EOF
     printf '%s\n' 'tests/unit/test_infra_tools.sh' >"${unit_only}"
     cat >"${runs_only}" <<'EOF'
 skills/goal/SKILL.md
-runs/20260919-pr-eval-pack/manifest.json
+runs/20260919-selftest-pack/manifest.json
 EOF
   else
     cat >"${bad}" <<'EOF'
@@ -202,19 +237,19 @@ scripts/instance/create.sh
 EOF
     cat >"${good}" <<'EOF'
 docs/infra-tools.md
-evals/fixtures/github.com/hermes/hermes/20260919-pr-eval-pack/check.sh
-evals/goals/github.com/hermes/hermes/20260919-pr-eval-pack.md
-evals/goals/github.com/hermes/hermes/20260919-pr-eval-pack-result.md
+evals/fixtures/github.com/hermes/hermes/20260919-selftest-pack/check.sh
+evals/goals/github.com/hermes/hermes/20260919-selftest-pack.md
+evals/goals/github.com/hermes/hermes/20260919-selftest-pack-result.md
 EOF
     cat >"${prerun}" <<'EOF'
 scripts/instance/create.sh
-evals/fixtures/github.com/hermes/hermes/20260919-pr-eval-pack/check.sh
-evals/goals/github.com/hermes/hermes/20260919-pr-eval-pack.md
+evals/fixtures/github.com/hermes/hermes/20260919-selftest-pack/check.sh
+evals/goals/github.com/hermes/hermes/20260919-selftest-pack.md
 EOF
     printf '%s\n' 'tests/unit/test_infra_tools.sh' >"${unit_only}"
     cat >"${runs_only}" <<'EOF'
 scripts/instance/create.sh
-evals/runs/20260919-pr-eval-pack/manifest.json
+evals/runs/20260919-selftest-pack/manifest.json
 EOF
   fi
   local fail=0
@@ -240,6 +275,35 @@ EOF
   fi
   if bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${runs_only}" >/dev/null 2>&1; then
     printf '✗ self-test: runs/ counted as a pack\n' >&2
+    fail=1
+  fi
+  # Result content rule (host layout, real files under a temp pack root).
+  local pack="${tmp}/pack" rdir="${tmp}/pack/evals/goals/github.com/o/r" paths_ok="${tmp}/paths-result"
+  mkdir -p "${rdir}"
+  cat >"${paths_ok}" <<'PATHS'
+scripts/instance/create.sh
+evals/fixtures/github.com/o/r/20260919-x/check.sh
+evals/goals/github.com/o/r/20260919-x.md
+evals/goals/github.com/o/r/20260919-x-result.md
+PATHS
+  printf '# Proof\nok\n' >"${rdir}/20260919-x-result.md"
+  if EVALS_PACK_ROOT="${pack}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${paths_ok}" >/dev/null 2>&1; then
+    printf '✗ self-test: ci mode accepted a result without a Manual verification section\n' >&2
+    fail=1
+  fi
+  printf '# Proof\nok\n\n# Manual verification\n\n# Next action\nnone\n' >"${rdir}/20260919-x-result.md"
+  if EVALS_PACK_ROOT="${pack}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${paths_ok}" >/dev/null 2>&1; then
+    printf '✗ self-test: ci mode accepted an empty Manual verification section\n' >&2
+    fail=1
+  fi
+  printf '# Proof\nok\n\n## Manual verification\n\nNone — nothing was run by hand.\n' >"${rdir}/20260919-x-result.md"
+  if ! EVALS_PACK_ROOT="${pack}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode ci --paths-file "${paths_ok}" >/dev/null 2>&1; then
+    printf '✗ self-test: ci mode rejected a result with a Manual verification section\n' >&2
+    fail=1
+  fi
+  printf '# Proof\nok\n' >"${rdir}/20260919-x-result.md"
+  if ! EVALS_PACK_ROOT="${pack}" bash "${SCRIPT_DIR}/assert_pr_has_eval_pack.sh" --mode pre-commit --paths-file "${paths_ok}" >/dev/null 2>&1; then
+    printf '✗ self-test: pre-commit mode must not require the result section\n' >&2
     fail=1
   fi
   if [[ "${fail}" -ne 0 ]]; then

@@ -36,12 +36,17 @@ reusable `eval-ci.yml`) checks all three. `eval-has-goal` and
 
 ## Chain
 
-1. **goal-author** — goals + fixtures (process SoT and/or product `evals/`);
-   `make eval/assert-red` until certified red
+1. **goal-author** (optionally via **build-eval**) — goals + fixtures with an
+   executive overview; `make eval/assert-red` until certified red; preflight the
+   universe pack-quality ratchet when keys allow
 2. Implement path (pick one):
    - **goal-develop** — human/agent implements within scope; never weaken evals
    - **goal-solve** — when goal has `solver: agent`: `make eval/solve` (TB2a)
-3. **goal-judge** — `make eval/verify` and/or `solve` / `run` / `report`; fail closed
+   - **hillclimb** — when optimizing performance/cost: one patch per round,
+     train/test split, revert on flat/regression
+3. **goal-judge** — `make eval/verify` and/or `solve` / `run` / `report`; fail
+   closed; always land the plain-language `<goal>-result.md` with **proof
+   snippets** from harness output (soft LLM product rubrics stay deferred)
 
 A fixture with `check.sh` needs a goal (`fixture_dir`; local pre-commit `eval-has-goal`).
 After the run, write `<goal>-result.md` beside the goal in a later local commit, not

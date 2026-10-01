@@ -13,6 +13,12 @@ that owns persistent evals). This hub supplies the templates, schema, and harnes
 stop when `assert-red` (or the product’s equivalent) certifies F2P is red on
 baseline.
 
+Prefer skill **build-eval** for the interview → samples → cheapest grader →
+executive overview → assert-red loop. Refuse a goal that is only frontmatter +
+empty tables. Lead with `# Executive overview` (see `templates/goal.md`).
+Preflight the universe pack-quality ratchet (`docs/meta-eval-quality.md`) when
+keys allow.
+
 Do **not** implement the product change here — that is **goal-develop**.
 
 If your workspace is a product repo (e.g. HockeyMind) and you only see

@@ -31,12 +31,24 @@
   agent in the runtime under test. A config file, a throwaway projector run, or
   a library script is not that agent.
 
+- A check you ran by hand and saw pass must become an automated check in the
+  same PR (or the result states why it cannot, with a reproducible command and a
+  script-written proof artifact). End-to-end claims are graded by running the
+  path from the documented starting state on a throwaway environment, not by
+  `grep`ing the implementing files. See `PROCESS.md` “Manual verification
+  becomes a test”; CI requires a `# Manual verification` section in results.
+
 ## Learned Workspace Facts
 
 - Skills SoT is `skills/`; host editors use tracked relative adapters in
   `.cursor/skills/` and `.agents/skills/`. Host projects that sync/subtree this
   hub at `evals/` should run `evals/scripts/install-host-adapters.sh` once.
   Org-wide harvest/redistribute: `docs/syncing.md` (`make sync/list|harvest|pull|doctor`).
+- Language / UI growth is open-closed: append
+  `goals|fixtures/language/<id>/` + one wire in `scripts/eval-bars.sh`
+  `run_*_bars`; consumers opt in via `evals/scope.yaml` `languages:`. See
+  `docs/scoping.md` § Ratchet. Do not add per-product UI workflows that
+  duplicate `eval/bars`.
 - Process evals SoT is host `~/.hermes/evals` (`EVALS_ROOT` /
   `HERMES_EVALS_ROOT`). Leaf name **`evals_process`** avoids colliding with a
   product’s tracked **`evals/`** (often this hub as a git subtree).

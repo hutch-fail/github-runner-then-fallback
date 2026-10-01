@@ -84,8 +84,9 @@ Soft-require personal skills via `~/.claude/skills/land-pr-until-green`
 ## Consumer PR expectations
 
 - Hub kit refresh + own leaf overlay only (no foreign packs)
-- Root `.pre-commit-config.yaml`: `evals-pre-commit` →
-  `evals/scripts/pre-commit-evals.sh` after `platform` when that suite exists
+- Root `.pre-commit-config.yaml` **required** before redistribute will commit
+  (`20260929-pre-commit-platform`): `hutch-fail/pre-commit` `id: platform` +
+  local `evals-pre-commit` → `evals/scripts/pre-commit-evals.sh`
 - Eval CI: single `eval-ci.yml` caller pinning
   `hutch-fail/evals/.github/workflows/eval-ci.yml@<sha>` (not separate
   pack/select). Prefer the hub template under

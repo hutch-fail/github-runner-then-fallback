@@ -8,7 +8,9 @@
 #   - (always) universe → no raw GH_APP_* Actions secrets, …
 #   - languages: ui / design|scripts/ui-* → UI language bars
 #   - *.tf / *.tf.json  → OpenTofu language bars (remote-backend, …)
-#   - *.ts / *.tsx / …  → typescript family (stub until a language bar exists)
+#   - ansible/** / ansible.cfg → Ansible language bars (single-converge, …)
+#   - .github/workflows/** / .github/actions/** → gha language bars
+#   - *.ts / *.tsx / …  → typescript family (typecheck / test when present)
 #
 # Usage (pre-commit, pass_filenames: true):
 #   bash evals/scripts/pre-commit-evals.sh [path...]

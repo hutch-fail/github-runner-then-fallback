@@ -19,10 +19,16 @@ bash evals/scripts/install-host-adapters.sh
 ## Pre-run report
 
 The pre-run report **is** the goal file, not a recap. Copy
-`evals/templates/goal.md` and keep the same headings. After the run, write
-`<goal>-result.md` beside the goal. A green check with no result file is not
-done. Commit the result in a later local commit, not with the goal or fixture.
-Both commits may be in one pull request. Squash or merge may combine them.
+`evals/templates/goal.md` (lead with `# Executive overview`) and keep the same
+headings. After the run, write `<goal>-result.md` beside the goal with plain
+language outcome and **proof snippets** from harness output. A green check with
+no result file is not done. Commit the result in a later local commit, not with
+the goal or fixture. Both commits may be in one pull request. Squash or merge
+may combine them.
+
+Process skills: **build-eval** (design packs), **hillclimb** (optimize with
+train/test discipline). Universe pack-quality ratchet:
+[`docs/meta-eval-quality.md`](docs/meta-eval-quality.md).
 
 If the claim is that an agent used a tool, the check starts that agent in the
 runtime under test. A config file, a throwaway projector run, or a library
@@ -123,6 +129,39 @@ cheapest green:
 “UI loads” for an auth-gated surface often wants at least L1. L0 alone is fine
 when the claim is truly “something answers on that Host.” Avoid treating L0 as
 Done for outcomes that need a mode or session unless Limitations says so.
+
+## Manual verification becomes a test
+
+A check you ran by hand and saw pass is proof that an automated check can
+exist. Do not leave it as prose in a PR description or result file.
+
+1. **Every manual pass gets an automated check.** If you verified something by
+   hand (ran a command, curled an endpoint, ran `make up` on a box, clicked
+   through), the PR carries a check that asserts the same observable. If it
+   truly cannot be automated, the result says why under `# Manual verification`
+   and gives the exact command plus where its proof artifact lives.
+2. **Say which tier you have.** *Hermetic*: runs anywhere (CI, `make test`)
+   against stubs or a sandbox; it proves wiring, ordering, defaults and error
+   messages, not the real world. *Live*: needs the real environment; it must
+   produce a **proof artifact written by a script** (command, exit code, commit
+   SHAs, timestamps), not text typed into a result file.
+3. **End-to-end claims need an end-to-end check.** A claim like "`make up`
+   works from a fresh clone" is graded by a check that executes that path from
+   the documented starting state (fresh clone → copy the example config →
+   run). `grep`s of the files that implement it may be extra rows, never the
+   only grader. If only a static check ran, the result must not present the
+   headline claim as proven; name the gap under Limitations.
+4. **Verify on a throwaway environment, not your long-lived one.** Long-lived
+   instances carry cached images, hand tweaks and "already installed" stamps
+   that hide first-run failures (an idempotent step that says "skip" never
+   re-runs the code you changed).
+5. **A bug found by a manual run gets a regression test** in the fix PR: it
+   fails before the fix and passes after, and the PR says so.
+
+Enforced in CI: `assert_pr_has_eval_pack.sh --mode ci` rejects any result file
+added or changed in the PR that lacks a non-empty `# Manual verification`
+section (use `None — <why>` when nothing was run by hand). Existing results
+are not rewritten.
 
 ## Skills
 

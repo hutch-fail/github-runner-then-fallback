@@ -5,6 +5,7 @@
 # Pass OP_SERVICE_ACCOUNT_TOKEN so the reusable can load App credentials from
 # 1Password (item hutch-fail-platform-github) and clone private hutch-fail/evals.
 # Use secrets: inherit if that org/repo secret already exists, or map explicitly.
+# Optional TYPESAFE_API_KEY (ui:jev + meta Tier2). Optional EVAL_LLM_* for meta Tier3.
 name: eval ci
 
 on:
@@ -32,3 +33,7 @@ jobs:
       hub_ref: PIN
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      EVAL_LLM_API_KEY: ${{ secrets.EVAL_LLM_API_KEY }}
+      EVAL_LLM_BASE_URL: ${{ secrets.EVAL_LLM_BASE_URL }}
+      EVAL_LLM_MODEL: ${{ secrets.EVAL_LLM_MODEL }}

@@ -14,7 +14,7 @@ EVALS_DIR="${PROJECT_ROOT}/evals"
 mkdir -p "${PROJECT_ROOT}/.cursor/skills" "${PROJECT_ROOT}/.cursor/rules" \
   "${PROJECT_ROOT}/.agents/skills"
 
-skills=(goal goal-author goal-develop goal-solve goal-judge meta-dev hypothesis-playground evals-org-redistribute)
+skills=(goal goal-author goal-develop goal-solve goal-judge meta-dev hypothesis-playground evals-org-redistribute build-eval hillclimb)
 for name in "${skills[@]}"; do
   [[ -d "${EVALS_DIR}/skills/${name}" ]] || die "missing skill ${name}"
   ln -sfn "../../evals/skills/${name}" "${PROJECT_ROOT}/.cursor/skills/${name}"

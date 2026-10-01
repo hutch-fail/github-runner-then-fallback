@@ -90,6 +90,32 @@ active  →  repo  →  (optional) language | universe
 2. **repo → language | universe:** only via PR on **this hub**. Product
    commits do not promote a bar to shared recipe scope.
 
+## Ratchet: detect → language bars → optional repo
+
+Open-closed growth for shared gates (OpenTofu prior art; UI/TypeScript follow
+the same shape):
+
+```text
+detect (scope.yaml languages: + path cues)
+  → universe bars (always)
+  → language bars for each declared id  (hub goals|fixtures/language/<id>/)
+  → optional repo goals                 (goals|fixtures/github.com/<org>/<repo>/)
+```
+
+| Layer | Closed for modification | Open for extension |
+| --- | --- | --- |
+| Dispatcher | One `scripts/eval-bars.sh` + one `eval-ci` rail | Append `run_<id>_bars` case + call |
+| Language family | Shared presence/execute checks under `language/<id>/` | New dated goal + fixture; wire in `run_*_bars` |
+| Product | Declares `languages:` in `evals/scope.yaml` | Own-leaf fixtures + `npm`/`make` scripts the bars invoke |
+
+**Promotion `repo → language`** is a hub PR only (see Promotion above). Product
+scripts (`ui:lint`, `typecheck`, …) are the executable extension points —
+language bars call them when present; they do **not** invent a second product
+workflow (anti-pattern: per-repo `ui-design.yml` duplicating `eval/bars`).
+
+Authors: add `fixtures/language/<id>/YYYYMMDD-…/check.sh`, matching goal under
+`goals/language/<id>/`, then one line in the matching `run_*_bars` function.
+
 ## Consumer manifest (`evals/scope.yaml`)
 
 Product-owned file beside the vendored kit (survives subtree merges like
@@ -119,16 +145,19 @@ Supported `languages:` ids (declaration is SoT for `make eval/select`):
 | Id | Meaning | Hub home |
 | --- | --- | --- |
 | `opentofu` | OpenTofu / Terraform language bars | `goals/language/opentofu/` |
-| `typescript` | TypeScript language bars (stub / reserved) | `goals/language/typescript/` when present |
+| `typescript` | TypeScript execute bars (`typecheck` / `test` when present) | `goals/language/typescript/` |
 | `python` | Python language bars (id reserved; no bars yet) | `goals/language/python/` when present |
-| `ui` | Design-system / front-end UX bars (not “TypeScript” alone) | `goals/language/ui/` |
+| `ui` | Design-system UX bars (presence + `ui:*` / optional Jev execute) | `goals/language/ui/` |
+| `ansible` | Ansible playbook language bars (single-converge) | `goals/language/ansible/` |
 
 `make eval/select` is **declaration-only**: a language goal applies only when the
 consumer lists that id. `make eval/bars` runs families from the same
 `languages:` list (so declared UI consumers get design bars in CI with no path
 args), plus path-detect (e.g. `*.tf` → `opentofu`, design-system / `scripts/ui-*`
-→ `ui`). Path-detect **warns** when paths imply a family the manifest omits —
-that warning does not change `eval/select`.
+→ `ui`, `ansible/**` / `ansible.cfg` → `ansible`, `.github/workflows/**` /
+`.github/actions/**` → `gha`). Path-detect **warns** when
+paths imply a family the manifest omits — that warning does not change
+`eval/select`.
 
 **Defaults when the file is missing:** infer `repo` from `git remote` /
 `HERMES_EVAL_REPO_ROOT` when possible; `languages: []`; `opt_out: []`.
@@ -170,9 +199,11 @@ legacy basenames as universe if a flat copy appears.)
 goals/universe/fixture-token-echo.md
 goals/universe/hub-kit-smoke.md
 goals/universe/20260924-no-gha-app-actions-secrets.md
+goals/universe/20260929-pre-commit-platform.md
 fixtures/token-echo/
 fixtures/hub-kit-smoke/
 fixtures/universe/20260924-no-gha-app-actions-secrets/
+fixtures/universe/20260929-pre-commit-platform/
 ```
 
 ```yaml
@@ -192,8 +223,8 @@ solver: none
 `GOAL=fixture-token-echo` still resolves by id. Do not add new product goals at
 the flat `goals/` root.
 
-Universe policy bar for Actions App secrets (always-on via `make eval/bars` /
-`scripts/eval-bars.sh` in local, pre-commit, and eval-ci):
+Universe policy bars (always-on via `make eval/bars` / `scripts/eval-bars.sh`
+in local, pre-commit, and eval-ci):
 
 ```yaml
 ---
@@ -209,6 +240,38 @@ solver: none
 ---
 ```
 
+```yaml
+---
+schema: goal/v1
+id: 20260929-pre-commit-platform
+title: Recipe consumers must include org pre-commit (platform + evals-pre-commit)
+scope: universe
+fixture_dir: evals/fixtures/universe/20260929-pre-commit-platform
+f2p_check: check.sh
+p2p_check: p2p-smoke.sh
+golden_patch: golden.patch
+solver: none
+---
+```
+
+### Universe vs `language/gha` CI/CD growth rails
+
+**Universe** — must-apply-to-all onboarding law (no second opt-in). DX:
+
+1. New repo opts into evals → next PR runs universe bars.
+2. Missing org pre-commit fails closed (`20260929-pre-commit-platform`).
+3. Author the next always-on guideline as `goals/universe/YYYYMMDD-…` +
+   fixture; append its `check.sh` in `run_universe_bars`; hub PR →
+   `sync/redistribute`.
+4. Existing and new consumers fail on the next PR until they backfill config.
+
+**`language/gha`** — path-targeted CI/CD / GitHub Actions / SDLC hygiene
+(same shape as OpenTofu / UI / Ansible). Fires when `.github/workflows/**` or
+`.github/actions/**` change, or when the consumer lists `languages: [gha]`
+(alias `ci` → `gha`). Author as `goals/language/gha/YYYYMMDD-…` + wire in
+`run_gha_bars`. Keep true always-on law on universe; do not dump every
+workflow guideline into universe just to avoid a language id.
+
 ### Language
 
 ```text
@@ -221,8 +284,9 @@ fixtures/language/opentofu/20260924-remote-backend-locking/
 Host pre-commit gate: see [`docs/evals.md`](evals.md)
 (`scripts/pre-commit-evals.sh` → `scripts/eval-bars.sh` / `make eval/bars`).
 One generic entry: **universe** bars always run; language families map from
-changed paths (e.g. `*.tf` → OpenTofu remote-backend; `*.ts` → typescript stub;
-design-system / `scripts/ui-*` → UI process + scope-manifest bars).
+changed paths (e.g. `*.tf` → OpenTofu remote-backend; `*.ts` → typescript
+typecheck/test when scripts exist; design-system / `scripts/ui-*` → UI
+presence + execute/`ui:jev` bars; `.github/workflows/**` → `gha` hygiene).
 
 ```yaml
 ---
