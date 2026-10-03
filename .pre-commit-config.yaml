@@ -1,7 +1,6 @@
-# Pin only - suite owned by hutch-fail/pre-commit (id: platform).
-  repos:
-    - repo: https://github.com/hutch-fail/pre-commit
-      rev: v0.1.5
-      hooks:
-        - id: platform
-  
+# Pin only — suite owned by hutch-fail/pre-commit (id: platform).
+repos:
+  - repo: https://github.com/hutch-fail/pre-commit
+    rev: v0.1.5
+    hooks:
+      - id: platform

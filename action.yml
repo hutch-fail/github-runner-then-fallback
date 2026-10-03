@@ -1,8 +1,10 @@
 # Prefer GitHub-hosted runners while included Actions minutes remain, then fall back.
 #
-# Attribution: the determine-runner job → runs-on fromJson(use-runner) workflow
-# shape matches mikehardy/runner-fallback-action. This is a new action with a
-# quota/billing predicate — not a label-swap fork of that project.
+# Adapted from mikehardy/runner-fallback-action (Mike Hardy; lineage: ianpurton
+# pattern, jimmygchen original, O-Mutt org/enterprise). We reuse the
+# determine-runner → fromJson(use-runner) workflow shape and input names; the
+# predicate is Actions minutes quota vs included budget, not self-hosted online.
+# Not a fork — see README "Credit and adaptation".
 name: GitHub Runner Then Fallback
 description: >-
   Prefer GitHub-hosted runners while included Actions minutes remain; otherwise
