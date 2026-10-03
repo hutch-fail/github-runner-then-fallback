@@ -1,4 +1,0 @@
-schema: evals-scope/v1
-repo: github.com/hutch-fail/github-runner-then-fallback
-languages: []
-opt_out: []

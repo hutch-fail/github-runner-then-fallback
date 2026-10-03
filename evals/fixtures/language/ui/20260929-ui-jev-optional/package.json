@@ -1,7 +1,0 @@
-{
-  "name": "ui-jev-optional-fixture",
-  "private": true,
-  "scripts": {
-    "ui:jev": "node -e \"process.exit(1)\""
-  }
-}

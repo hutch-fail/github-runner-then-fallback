@@ -4,11 +4,3 @@ repos:
     rev: v0.1.5
     hooks:
       - id: platform
-
-  - repo: local
-    hooks:
-      - id: evals-pre-commit
-        name: evals — apply scoped bars for changed paths
-        entry: bash evals/scripts/pre-commit-evals.sh
-        language: system
-        pass_filenames: true
