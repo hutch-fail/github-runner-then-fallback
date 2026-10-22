@@ -1,6 +1,6 @@
 # github-runner-then-fallback
 
-By default: use **GitHub-hosted** up to **80%** of included Actions minutes, then **Blacksmith** up to **80%** of its included minutes, then **usejoy** for overage. The determine-runner job should run on usejoy so metering does not spend the free pools.
+By default: use **GitHub-hosted** up to **80%** of included Actions minutes, then **Blacksmith** up to **80%** of its included minutes, then **Jog** (`jog` / [usejog.com](https://usejog.com)) for overage. The determine-runner (detect) job itself runs on **GitHub-hosted** (`ubuntu-latest`) so metering does not depend on Jog being online.
 
 Pass `final-runner: ""` for the older two-way switch (GitHub until the full allowance, then Blacksmith).
 
@@ -28,14 +28,17 @@ Upstream lineage, as documented there:
 | `fallback-on-error` | Prefer fallback over hard-failing CI when the check breaks |
 | Serial `concurrency` group on determine-runner | Avoid racing parallel workflows when choice must be consistent |
 
-### Recommended: reusable workflow (detect on usejoy)
+### Recommended: reusable workflow (detect on GitHub-hosted)
 
-Defaults: 80% GitHub (`2000`), 80% Blacksmith (`3000`), final `usejoy-2vcpu-ubuntu-2404`, detect job on that same usejoy label.
+Defaults: detect on `ubuntu-latest`; work jobs 80% GitHub (`2000`) → 80% Blacksmith (`3000`) → final `jog`.
 
 ```yaml
 jobs:
   determine-runner:
     uses: hutch-fail/github-runner-then-fallback/.github/workflows/determine-runner.yml@v1
+    with:
+      # Same ref as the uses: pin above (required for cross-repo callers).
+      action-ref: v1
     secrets:
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
       BLACKSMITH_API_TOKEN: ${{ secrets.BLACKSMITH_API_TOKEN }}
@@ -49,12 +52,12 @@ jobs:
 
 ### Inline composite (same defaults)
 
-Run the detect job on usejoy (`final-runner` default). Only `github-token` is required; pass `blacksmith-api-token` so the Blacksmith pool is metered.
+Run the detect job on `ubuntu-latest`. Only `github-token` is required; pass `blacksmith-api-token` so the Blacksmith pool is metered.
 
 ```yaml
 jobs:
   determine-runner:
-    runs-on: usejoy-2vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     concurrency:
       group: runner-determination
       cancel-in-progress: false
@@ -74,7 +77,7 @@ jobs:
       - uses: actions/checkout@v4
 ```
 
-Replace `usejoy-2vcpu-ubuntu-2404` if your usejoy install registers a different label. Opt out of chain with `final-runner: ""` (two-way GitHub→Blacksmith; put detect on `ubuntu-latest` or Blacksmith).
+Consumer repos must be **private** and listed on [usejog.com/account](https://usejog.com/account). Use `jog-4vcpu` (etc.) if you need a larger size. Opt out of chain with `final-runner: ""` (two-way GitHub→Blacksmith).
 
 ### What we changed
 
@@ -113,7 +116,7 @@ Decision (**chain**, default — `final-runner` non-empty, `usage-threshold` = 8
 
 1. Read current-period `actions_linux` `grossQuantity`; if `used < included-minutes * 0.8` → emit **primary** (default included `2000`)
 2. Else read Blacksmith billable minutes via CLI + org token; if under 80% of `blacksmith-included-minutes` (default `3000`) → emit **fallback**
-3. Else → emit **final** (default usejoy). GitHub meter failure skips to Blacksmith; Blacksmith meter missing/failed emits final.
+3. Else → emit **final** (default `jog`). GitHub meter failure skips to Blacksmith; Blacksmith meter missing/failed emits final.
 
 Decision (**two-way**, `final-runner: ""`):
 
@@ -140,7 +143,7 @@ See [Releases](https://github.com/hutch-fail/github-runner-then-fallback/release
 | `github-token` | yes | — | Billing-capable token (not `GITHUB_TOKEN`) |
 | `primary-runner` | no | `ubuntu-latest` | Labels while under GitHub headroom |
 | `fallback-runner` | no | `blacksmith-2vcpu-ubuntu-2404` | Labels while under Blacksmith headroom |
-| `final-runner` | no | `usejoy-2vcpu-ubuntu-2404` | Overage labels; `""` = two-way only |
+| `final-runner` | no | `jog` | Overage labels (Jog); `""` = two-way only |
 | `included-minutes` | no | `2000` | GitHub Free included Linux minutes |
 | `blacksmith-included-minutes` | no | `3000` | Blacksmith free minutes |
 | `usage-threshold` | no | `80` | Percent of each allowance before leaving that pool |
@@ -159,13 +162,13 @@ See [Releases](https://github.com/hutch-fail/github-runner-then-fallback/release
 | Name | Kind | Purpose |
 | --- | --- | --- |
 | `ORG_BILLING_TOKEN` | **secret** (required) | Org enhanced billing usage |
-| `BLACKSMITH_API_TOKEN` | **secret** (recommended) | Meter Blacksmith; without it, after GHA headroom → usejoy |
+| `BLACKSMITH_API_TOKEN` | **secret** (recommended) | Meter Blacksmith; without it, after GHA headroom → Jog |
 | `ACTIONS_INCLUDED_MINUTES` | **variable** (optional) | Override default `2000` |
 | `BLACKSMITH_INCLUDED_MINUTES` | **variable** (optional) | Override default `3000` |
 
 ## This repository’s CI
 
-**Pinned `ubuntu-latest`** for required test CI (`ci.yml`). The ship gate must not call `determine-runner` — a broken picker, missing usejoy, or billing failure must not block fixing the action.
+**Pinned `ubuntu-latest`** for required test CI (`ci.yml`). The ship gate must not call `determine-runner` — a broken picker, missing Jog, or billing failure must not block fixing the action. (This repo may stay public; Jog only runs private repos.)
 
 Optional **non-blocking** smoke (`smoke-determine-runner.yml`) calls the reusable workflow with org secrets and logs the chosen labels (`continue-on-error`). Do not make that workflow a required status check.
 

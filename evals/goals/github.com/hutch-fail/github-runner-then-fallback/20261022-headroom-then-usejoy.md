@@ -1,7 +1,7 @@
 ---
 schema: goal/v1
 id: 20261022-headroom-then-usejoy
-title: Default headroom chain then usejoy for paid minutes
+title: Default headroom chain then Jog (usejog) for overage
 scope: repo
 fixture_dir: evals/fixtures/github.com/hutch-fail/github-runner-then-fallback/20261022-headroom-then-usejoy
 f2p_check: check.sh
@@ -12,22 +12,22 @@ solver: none
 # Executive overview
 
 The action defaults to a headroom chain: GitHub up to 80% of 2000 included
-minutes, Blacksmith up to 80% of 3000, then usejoy for overage. A reusable
-workflow runs the detect job on usejoy by default. Two-way remains available
-with `final-runner: ""`.
+minutes, Blacksmith up to 80% of 3000, then Jog (`jog` / usejog.com) for
+overage. A reusable workflow runs the detect job on GitHub-hosted
+(`ubuntu-latest`) by default. Two-way remains available with `final-runner: ""`.
 
 # Decision
 
 A pass lets us claim those defaults are wired in `action.yml`, the reusable
-`determine-runner.yml` meters on usejoy, offline `choose_runner` covers 80/80/final,
-and docs describe the default chain. A pass does not prove live billing or
-Blacksmith CLI auth against production tokens.
+`determine-runner.yml` detects on `ubuntu-latest`, offline `choose_runner`
+covers 80/80/final, and docs describe the default chain. A pass does not prove
+live billing or Blacksmith CLI auth against production tokens.
 
 # User outcome
 
-Operators get headroom + usejoy overage with only billing/Blacksmith secrets.
-Missing Blacksmith meter data fails closed to usejoy when `fallback-on-error`
-is true.
+Operators get headroom + Jog overage with only billing/Blacksmith secrets.
+Missing Blacksmith meter data fails closed to Jog when `fallback-on-error`
+is true. Consumer repos must be private and listed on usejog.com/account.
 
 # Scope
 
@@ -35,14 +35,14 @@ is true.
 | --- | --- |
 | Inputs, decide.sh chain predicate, README chain example | Live org billing / Blacksmith org-token calls |
 | Offline choose_runner 80% cases | Org-wide workflow rollout |
-| Two-way default preserved | usejoy usage metering (no public API) |
+| Two-way default preserved | Jog credit/waitlist / public-repo refusal |
 
 # Success criteria
 
 | Criterion | What we look at |
 | --- | --- |
-| Sensible defaults on the action | `final-runner`→usejoy, threshold 80, included 2000, blacksmith 3000, primary/fallback labels |
-| Reusable detect on usejoy | `.github/workflows/determine-runner.yml` defaults to usejoy |
+| Sensible defaults on the action | `final-runner`→`jog`, threshold 80, included 2000, blacksmith 3000, primary/fallback labels |
+| Reusable detect on GitHub-hosted | `.github/workflows/determine-runner.yml` `detect-runner` defaults to `ubuntu-latest` |
 | Required CI is bootstrap-safe | `ci.yml` pins `ubuntu-latest` and does not call the picker |
 | Non-blocking live smoke | `smoke-determine-runner.yml` uses the reusable workflow with `continue-on-error` |
 | Pure choice implements 80/80/final | `choose_runner` / `under_headroom`; fixture asserts cases |
@@ -66,8 +66,10 @@ tree (`HERMES_EVAL_REPO_ROOT`).
 
 - Allowance values stay configured; neither GitHub nor the Blacksmith CLI
   returns minutes remaining.
-- usejoy label is an input; no usage API is graded.
+- Jog label is an input; this pack does not grade credits or waitlist.
 - This pack does not install or call the live Blacksmith CLI.
+- This action repo may stay public (Jog will not run *its* jobs); defaults are
+  for private consumer repos.
 
 # Acceptance gates
 

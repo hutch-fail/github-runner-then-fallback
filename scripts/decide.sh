@@ -151,7 +151,7 @@ emit_runner() {
   echo "Selected runner JSON: $json"
 }
 
-# Last-resort emit: two-way → fallback; chain → final (usejoy).
+# Last-resort emit: two-way → fallback; chain → final (Jog).
 fail_or_last_resort() {
   local msg="$1"
   echo "::warning::$msg"
@@ -182,8 +182,9 @@ ensure_blacksmith_cli() {
   if command -v blacksmith >/dev/null 2>&1; then
     return 0
   fi
-  echo "Installing Blacksmith CLI"
-  curl -fsSL https://get.blacksmith.sh | sh
+  # stderr only — stdout is captured as billable minutes by the caller.
+  echo "Installing Blacksmith CLI" >&2
+  curl -fsSL https://get.blacksmith.sh | sh >&2
   export PATH="${HOME}/.local/bin:${HOME}/.blacksmith/bin:/usr/local/bin:${PATH}"
   command -v blacksmith >/dev/null 2>&1
 }
@@ -199,8 +200,8 @@ fetch_blacksmith_billable_minutes() {
 
   ensure_blacksmith_cli || return 1
 
-  # Non-interactive org token auth for CI.
-  printf '%s' "$token" | blacksmith auth login --api-token - --non-interactive --organization "$org" \
+  # Non-interactive org token auth for CI (stderr — stdout is the minutes value).
+  printf '%s' "$token" | blacksmith auth login --api-token - --non-interactive --organization "$org" >&2 \
     || return 1
 
   blacksmith usage --start-time "$start" --end-time "$end" --format json \
@@ -365,7 +366,7 @@ main() {
     return 0
   fi
 
-  # Chain mode: GitHub headroom → Blacksmith headroom → final (usejoy).
+  # Chain mode: GitHub headroom → Blacksmith headroom → final (Jog).
   local bs_included=""
   local bs_used=""
   if [[ -n "$bs_included_raw" ]]; then

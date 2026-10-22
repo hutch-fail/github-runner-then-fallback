@@ -17,8 +17,8 @@ assert_action_defaults() {
   grep -q '^  blacksmith-api-token:' "${action}" || miss "action.yml missing blacksmith-api-token"
   grep -q 'INPUT_FINAL_RUNNER' "${action}" || miss "action.yml does not pass INPUT_FINAL_RUNNER"
 
-  grep -Eq 'default:[[:space:]]*usejoy-2vcpu-ubuntu-2404' "${action}" \
-    || miss "action.yml final-runner should default to usejoy-2vcpu-ubuntu-2404"
+  grep -Eq 'default:[[:space:]]*jog[[:space:]]*$' "${action}" \
+    || miss "action.yml final-runner should default to jog (usejog.com)"
   grep -Eq 'default:[[:space:]]*"80"' "${action}" \
     || miss "action.yml usage-threshold should default to 80"
   grep -Eq 'default:[[:space:]]*"2000"' "${action}" \
@@ -50,7 +50,16 @@ assert_docs_and_workflow() {
   grep -Eq 'determine-runner' "${readme}" || miss "README missing determine-runner example"
 
   [[ -f "${wf}" ]] || miss "missing reusable determine-runner.yml"
-  grep -Eq 'usejoy-2vcpu-ubuntu-2404' "${wf}" || miss "determine-runner.yml should default detect/final to usejoy"
+  grep -Eq 'default:[[:space:]]*jog[[:space:]]*$' "${wf}" \
+    || miss "determine-runner.yml final-runner should default to jog (usejog.com)"
+  grep -Eq '^[[:space:]]+detect-runner:' "${wf}" \
+    || miss "determine-runner.yml missing detect-runner input"
+  detect_default="$(awk '/^[[:space:]]+detect-runner:/{p=1; next} p && /^[[:space:]]+default:/{print $2; exit}' "${wf}")"
+  [[ "${detect_default}" == "ubuntu-latest" ]] \
+    || miss "determine-runner.yml detect-runner should default to ubuntu-latest (got ${detect_default:-empty})"
+  if grep -Eq 'runs-on:.*inputs\.final-runner' "${wf}"; then
+    miss "determine job runs-on must not use final-runner (detect is GitHub-hosted)"
+  fi
 
   [[ -f "${ci}" ]] || miss "missing ci.yml"
   grep -Eq 'runs-on:[[:space:]]*ubuntu-latest' "${ci}" || miss "ci.yml must pin ubuntu-latest (bootstrap)"
@@ -59,7 +68,12 @@ assert_docs_and_workflow() {
   fi
 
   [[ -f "${smoke}" ]] || miss "missing smoke-determine-runner.yml"
-  grep -Eq 'continue-on-error:[[:space:]]*true' "${smoke}" || miss "smoke must be continue-on-error"
+  # Caller cannot set job-level continue-on-error with uses:; pass under with:.
+  if grep -Eq '^[[:space:]]{4}continue-on-error:' "${smoke}"; then
+    miss "smoke must not set job-level continue-on-error (invalid with uses:)"
+  fi
+  grep -Eq '^[[:space:]]{6,}continue-on-error:[[:space:]]*true' "${smoke}" \
+    || miss "smoke must pass continue-on-error: true under with:"
 }
 
 assert_choose_runner_cases() {

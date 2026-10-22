@@ -7,9 +7,10 @@ status: pass
 # Executive outcome
 
 Default headroom chain is wired: 80% of GitHub (2000), 80% of Blacksmith (3000),
-then usejoy; reusable `determine-runner.yml` meters on usejoy. Required `ci.yml`
-pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
-`continue-on-error`. F2P red on `origin/main`, green on this branch.
+then Jog (`jog` / usejog.com); reusable `determine-runner.yml` detects on
+`ubuntu-latest`. Required `ci.yml` pins `ubuntu-latest` (no picker catch-22);
+optional smoke dogfoods with `continue-on-error`. F2P red on `origin/main`,
+green on this branch.
 
 # Result
 
@@ -17,9 +18,9 @@ pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
 
 # Outcome
 
-Pass. Action defaults, reusable detect-on-usejoy workflow, bootstrap-safe
+Pass. Action defaults, reusable detect-on-GitHub-hosted workflow, bootstrap-safe
 `ci.yml`, non-blocking smoke, offline 80/80/final cases, and docs match.
-Two-way remains via `final-runner: ""`.
+Two-way remains via `final-runner: ""`. Final overage label is `jog`.
 
 # Proof
 
@@ -41,19 +42,23 @@ bash tests/assert_action_yml.sh → action_yml_ok
 
 # Blocking findings
 
-None.
+None for the hermetic pack. Live Jog requires private consumer repos listed on
+usejog.com/account with credits; this action repo may stay public.
 
 # Comparison
 
-Main: two-way only, no usejoy default. Branch: chain defaults + detect-on-usejoy reusable workflow.
+Main: two-way only, no Jog default. Branch: chain defaults + detect on
+`ubuntu-latest` + final `jog`.
 
 # Evidence and limitations
 
-Live GitHub billing and Blacksmith org-token calls were not exercised. The
-usejoy label default is `usejoy-2vcpu-ubuntu-2404` until the install’s real
-label is confirmed.
+Live GitHub billing and Blacksmith org-token calls were not exercised in the
+hermetic pack. Org usage observed elsewhere already exceeds both 80% pools, so
+consumers should emit `jog` once pinned to this SHA.
 
 # Next action
 
-Merge; set org secrets `ORG_BILLING_TOKEN` and `BLACKSMITH_API_TOKEN`. Prefer
-`uses: …/determine-runner.yml@v1` so detect runs on usejoy by default.
+Merge; set org secrets `ORG_BILLING_TOKEN` and `BLACKSMITH_API_TOKEN`. Confirm
+private consumers on usejog.com/account. Prefer
+`uses: …/determine-runner.yml@v1` (or SHA) so detect runs on `ubuntu-latest`
+and final defaults to `jog`.

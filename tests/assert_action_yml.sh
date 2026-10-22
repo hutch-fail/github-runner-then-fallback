@@ -32,8 +32,8 @@ grep -Eq '^[[:space:]]*default:[[:space:]]*ubuntu-latest[[:space:]]*$' "$f" \
   || { echo "action.yml: primary-runner should default to ubuntu-latest" >&2; exit 1; }
 grep -Eq '^[[:space:]]*default:[[:space:]]*blacksmith-2vcpu-ubuntu-2404[[:space:]]*$' "$f" \
   || { echo "action.yml: fallback-runner should default to blacksmith-2vcpu-ubuntu-2404" >&2; exit 1; }
-grep -Eq '^[[:space:]]*default:[[:space:]]*usejoy-2vcpu-ubuntu-2404[[:space:]]*$' "$f" \
-  || { echo "action.yml: final-runner should default to usejoy-2vcpu-ubuntu-2404" >&2; exit 1; }
+grep -Eq '^[[:space:]]*default:[[:space:]]*jog[[:space:]]*$' "$f" \
+  || { echo "action.yml: final-runner should default to jog (usejog.com)" >&2; exit 1; }
 grep -Eq '^[[:space:]]*default:[[:space:]]*"80"[[:space:]]*$' "$f" \
   || { echo "action.yml: usage-threshold should default to \"80\"" >&2; exit 1; }
 grep -Eq '^[[:space:]]*default:[[:space:]]*"2000"[[:space:]]*$' "$f" \

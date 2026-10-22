@@ -8,7 +8,7 @@
 name: GitHub Runner Then Fallback
 description: >-
   Prefer GitHub-hosted runners up to 80% of included Actions minutes, then
-  Blacksmith up to 80% of its included minutes, then a final runner (usejoy)
+  Blacksmith up to 80% of its included minutes, then Jog (jog / usejog.com)
   for overage. Pass final-runner: "" to keep a two-way GitHub→Blacksmith switch.
 author: hutch-fail
 branding:
@@ -56,12 +56,12 @@ inputs:
   final-runner:
     description: >-
       Comma-separated labels for the final runner when both GitHub and Blacksmith
-      are at or past the usage-threshold headroom (usejoy). Non-empty enables
-      chain mode (the default). Pass an empty string to disable chain and use
-      two-way GitHub→fallback only. Run the determine-runner job on this same
-      label so metering does not spend GitHub or Blacksmith minutes.
+      are at or past the usage-threshold headroom (Jog / usejog.com). Non-empty
+      enables chain mode (the default). Pass an empty string to disable chain and
+      use two-way GitHub→fallback only. The determine-runner (detect) job itself
+      defaults to ubuntu-latest so metering does not depend on Jog.
     required: false
-    default: usejoy-2vcpu-ubuntu-2404
+    default: jog
   usage-threshold:
     description: >-
       Percent of each configured allowance to use before leaving that pool

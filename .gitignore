@@ -2,3 +2,6 @@
 *.swp
 /tmp/
 .env
+
+# openlore analysis artifacts
+.openlore/
