@@ -182,8 +182,9 @@ ensure_blacksmith_cli() {
   if command -v blacksmith >/dev/null 2>&1; then
     return 0
   fi
-  echo "Installing Blacksmith CLI"
-  curl -fsSL https://get.blacksmith.sh | sh
+  # stderr only — stdout is captured as billable minutes by the caller.
+  echo "Installing Blacksmith CLI" >&2
+  curl -fsSL https://get.blacksmith.sh | sh >&2
   export PATH="${HOME}/.local/bin:${HOME}/.blacksmith/bin:/usr/local/bin:${PATH}"
   command -v blacksmith >/dev/null 2>&1
 }
@@ -199,8 +200,8 @@ fetch_blacksmith_billable_minutes() {
 
   ensure_blacksmith_cli || return 1
 
-  # Non-interactive org token auth for CI.
-  printf '%s' "$token" | blacksmith auth login --api-token - --non-interactive --organization "$org" \
+  # Non-interactive org token auth for CI (stderr — stdout is the minutes value).
+  printf '%s' "$token" | blacksmith auth login --api-token - --non-interactive --organization "$org" >&2 \
     || return 1
 
   blacksmith usage --start-time "$start" --end-time "$end" --format json \

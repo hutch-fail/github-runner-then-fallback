@@ -31,4 +31,12 @@ if grep -Eq 'uses:[[:space:]]*\./[[:space:]]*$' "${wf}"; then
   miss "determine-runner.yml must not use bare uses: ./ (resolves in caller repo)"
 fi
 
+decide="${root}/scripts/decide.sh"
+[[ -f "${decide}" ]] || miss "missing scripts/decide.sh"
+grep -Fq 'Installing Blacksmith CLI" >&2' "${decide}" \
+  || miss "ensure_blacksmith_cli must log install to stderr (stdout is minutes)"
+grep -Fq 'blacksmith auth login' "${decide}" || miss "missing blacksmith auth login"
+grep -Eq 'blacksmith auth login.*>&2' "${decide}" \
+  || miss "blacksmith auth login must redirect to stderr"
+
 echo smoke_continue_on_error_input_ok
