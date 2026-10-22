@@ -1,7 +1,7 @@
 ---
 schema: goal/v1
 id: 20261022-headroom-then-usejoy
-title: Opt-in headroom chain then usejoy for paid minutes
+title: Default headroom chain then usejoy for paid minutes
 scope: repo
 fixture_dir: evals/fixtures/github.com/hutch-fail/github-runner-then-fallback/20261022-headroom-then-usejoy
 f2p_check: check.sh
@@ -11,25 +11,23 @@ solver: none
 
 # Executive overview
 
-Consumers can leave headroom on free GitHub Actions and Blacksmith minutes,
-then send paid work to a final runner (usejoy). The detect job is documented to
-run on that final label so metering does not burn the free pools. Two-way
-behavior stays the default when `final-runner` is unset.
+The action defaults to a headroom chain: GitHub up to 80% of 2000 included
+minutes, Blacksmith up to 80% of 3000, then usejoy for overage. A reusable
+workflow runs the detect job on usejoy by default. Two-way remains available
+with `final-runner: ""`.
 
 # Decision
 
-A pass lets us claim the action exposes an opt-in chain (GitHub under
-`usage-threshold` of `included-minutes` → Blacksmith under the same threshold
-of `blacksmith-included-minutes` → `final-runner`) with offline
-`choose_runner` coverage, and that docs show `determine-runner` on the final
-label. A pass does not prove live billing API or Blacksmith CLI auth against
-production tokens.
+A pass lets us claim those defaults are wired in `action.yml`, the reusable
+`determine-runner.yml` meters on usejoy, offline `choose_runner` covers 80/80/final,
+and docs describe the default chain. A pass does not prove live billing or
+Blacksmith CLI auth against production tokens.
 
 # User outcome
 
-Operators keep free-minute headroom and route overage to usejoy without
-rewriting every workflow’s two-way inputs. Missing Blacksmith meter data fails
-closed to the final runner when `fallback-on-error` is true.
+Operators get headroom + usejoy overage with only billing/Blacksmith secrets.
+Missing Blacksmith meter data fails closed to usejoy when `fallback-on-error`
+is true.
 
 # Scope
 
@@ -43,11 +41,11 @@ closed to the final runner when `fallback-on-error` is true.
 
 | Criterion | What we look at |
 | --- | --- |
-| Chain inputs exist on the action | `action.yml` has `final-runner`, `usage-threshold`, `blacksmith-included-minutes`, `blacksmith-api-token` |
-| Pure choice implements 80/80/final | `choose_runner` / `under_headroom` in `scripts/decide.sh`; fixture asserts cases |
+| Sensible defaults on the action | `final-runner`→usejoy, threshold 80, included 2000, blacksmith 3000, primary/fallback labels |
+| Reusable detect on usejoy | `.github/workflows/determine-runner.yml` defaults to usejoy |
+| Pure choice implements 80/80/final | `choose_runner` / `under_headroom`; fixture asserts cases |
 | Blacksmith usage path exists | `fetch_blacksmith_billable_minutes` in `decide.sh` |
-| Docs show detect on final label | README mentions `final-runner` / `determine-runner` |
-| Two-way default intact | P2P: under budget → primary, at budget → fallback |
+| Two-way opt-out still works | P2P: under budget → primary, at budget → fallback |
 
 # Dataset
 
