@@ -43,6 +43,8 @@ is true.
 | --- | --- |
 | Sensible defaults on the action | `final-runner`→usejoy, threshold 80, included 2000, blacksmith 3000, primary/fallback labels |
 | Reusable detect on usejoy | `.github/workflows/determine-runner.yml` defaults to usejoy |
+| Required CI is bootstrap-safe | `ci.yml` pins `ubuntu-latest` and does not call the picker |
+| Non-blocking live smoke | `smoke-determine-runner.yml` uses the reusable workflow with `continue-on-error` |
 | Pure choice implements 80/80/final | `choose_runner` / `under_headroom`; fixture asserts cases |
 | Blacksmith usage path exists | `fetch_blacksmith_billable_minutes` in `decide.sh` |
 | Two-way opt-out still works | P2P: under budget → primary, at budget → fallback |

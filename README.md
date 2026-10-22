@@ -165,7 +165,9 @@ See [Releases](https://github.com/hutch-fail/github-runner-then-fallback/release
 
 ## This repository’s CI
 
-**Blacksmith-only** for local test CI (`ci.yml`). This repo does **not** dogfood the prefer-GHA path (avoids burning free minutes and recursive `determine-runner` while shipping the action).
+**Pinned `ubuntu-latest`** for required test CI (`ci.yml`). The ship gate must not call `determine-runner` — a broken picker, missing usejoy, or billing failure must not block fixing the action.
+
+Optional **non-blocking** smoke (`smoke-determine-runner.yml`) calls the reusable workflow with org secrets and logs the chosen labels (`continue-on-error`). Do not make that workflow a required status check.
 
 ### Release
 

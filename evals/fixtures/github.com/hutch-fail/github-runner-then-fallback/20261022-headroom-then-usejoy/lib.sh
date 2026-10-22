@@ -41,6 +41,8 @@ assert_docs_and_workflow() {
   local root="$1"
   local readme="${root}/README.md"
   local wf="${root}/.github/workflows/determine-runner.yml"
+  local ci="${root}/.github/workflows/ci.yml"
+  local smoke="${root}/.github/workflows/smoke-determine-runner.yml"
   [[ -f "${readme}" ]] || miss "missing README.md"
 
   grep -Eq 'final-runner|FINAL_RUNNER' "${readme}" || miss "README missing final-runner docs"
@@ -49,6 +51,15 @@ assert_docs_and_workflow() {
 
   [[ -f "${wf}" ]] || miss "missing reusable determine-runner.yml"
   grep -Eq 'usejoy-2vcpu-ubuntu-2404' "${wf}" || miss "determine-runner.yml should default detect/final to usejoy"
+
+  [[ -f "${ci}" ]] || miss "missing ci.yml"
+  grep -Eq 'runs-on:[[:space:]]*ubuntu-latest' "${ci}" || miss "ci.yml must pin ubuntu-latest (bootstrap)"
+  if grep -Eq '^[[:space:]]*uses:[[:space:]].*(determine-runner|github-runner-then-fallback)' "${ci}"; then
+    miss "ci.yml must not call the picker (bootstrap catch-22)"
+  fi
+
+  [[ -f "${smoke}" ]] || miss "missing smoke-determine-runner.yml"
+  grep -Eq 'continue-on-error:[[:space:]]*true' "${smoke}" || miss "smoke must be continue-on-error"
 }
 
 assert_choose_runner_cases() {

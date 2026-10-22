@@ -5,10 +5,12 @@ on:
     branches: [main]
   pull_request:
 
-# This action repo CI is Blacksmith-only — do not dogfood prefer-GHA here.
+# Bootstrap CI: pin GitHub-hosted runners. Required tests must not invoke the
+# picker workflow — a broken picker / missing usejoy / billing failure must not
+# block shipping fixes. Live picker coverage is smoke-determine-runner.yml only.
 jobs:
   test:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Offline helper tests
