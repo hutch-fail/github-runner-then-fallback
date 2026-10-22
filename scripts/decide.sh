@@ -151,7 +151,7 @@ emit_runner() {
   echo "Selected runner JSON: $json"
 }
 
-# Last-resort emit: two-way → fallback; chain → final (usejoy).
+# Last-resort emit: two-way → fallback; chain → final (Jog).
 fail_or_last_resort() {
   local msg="$1"
   echo "::warning::$msg"
@@ -366,7 +366,7 @@ main() {
     return 0
   fi
 
-  # Chain mode: GitHub headroom → Blacksmith headroom → final (usejoy).
+  # Chain mode: GitHub headroom → Blacksmith headroom → final (Jog).
   local bs_included=""
   local bs_used=""
   if [[ -n "$bs_included_raw" ]]; then

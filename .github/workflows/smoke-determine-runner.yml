@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   determine-runner:
-    # Failures here (usejoy offline, bad token, etc.) must not block merges.
+    # Failures here (Jog offline/waitlist, bad token, etc.) must not block merges.
     # continue-on-error cannot sit on a job that uses: a reusable workflow —
     # pass it as an input instead.
     uses: ./.github/workflows/determine-runner.yml

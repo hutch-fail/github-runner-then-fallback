@@ -6,7 +6,7 @@ on:
   pull_request:
 
 # Bootstrap CI: pin GitHub-hosted runners. Required tests must not invoke the
-# picker workflow — a broken picker / missing usejoy / billing failure must not
+# picker workflow — a broken picker / missing Jog / billing failure must not
 # block shipping fixes. Live picker coverage is smoke-determine-runner.yml only.
 jobs:
   test:

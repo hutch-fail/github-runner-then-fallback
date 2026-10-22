@@ -1,5 +1,5 @@
 # Reusable determine-runner job: detect on GitHub-hosted by default; work jobs
-# follow the chain (GHA → Blacksmith → usejoy).
+# follow the chain (GHA → Blacksmith → Jog).
 name: Determine runner
 
 on:
@@ -17,11 +17,11 @@ on:
         default: blacksmith-2vcpu-ubuntu-2404
       final-runner:
         description: >-
-          Final overage labels (usejoy). Pass empty string for two-way
-          GitHub→Blacksmith only.
+          Final overage labels (Jog / usejog.com). Pass empty string for
+          two-way GitHub→Blacksmith only.
         type: string
         required: false
-        default: usejoy-2vcpu-ubuntu-2404
+        default: jog
       detect-runner:
         description: >-
           Label for this determine-runner (meter) job. Defaults to
