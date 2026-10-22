@@ -7,8 +7,9 @@ status: pass
 # Executive outcome
 
 Default headroom chain is wired: 80% of GitHub (2000), 80% of Blacksmith (3000),
-then usejoy; reusable `determine-runner.yml` meters on usejoy. F2P red on
-`origin/main`, green on this branch.
+then usejoy; reusable `determine-runner.yml` meters on usejoy. Required `ci.yml`
+pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
+`continue-on-error`. F2P red on `origin/main`, green on this branch.
 
 # Result
 
@@ -16,8 +17,9 @@ then usejoy; reusable `determine-runner.yml` meters on usejoy. F2P red on
 
 # Outcome
 
-Pass. Action defaults, reusable detect-on-usejoy workflow, offline 80/80/final
-cases, and docs match the default chain. Two-way remains via `final-runner: ""`.
+Pass. Action defaults, reusable detect-on-usejoy workflow, bootstrap-safe
+`ci.yml`, non-blocking smoke, offline 80/80/final cases, and docs match.
+Two-way remains via `final-runner: ""`.
 
 # Proof
 
