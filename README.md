@@ -1,6 +1,6 @@
 # github-runner-then-fallback
 
-By default: use **GitHub-hosted** up to **80%** of included Actions minutes, then **Blacksmith** up to **80%** of its included minutes, then **usejoy** for overage. The determine-runner job should run on usejoy so metering does not spend the free pools.
+By default: use **GitHub-hosted** up to **80%** of included Actions minutes, then **Blacksmith** up to **80%** of its included minutes, then **usejoy** for overage. The determine-runner (detect) job itself runs on **GitHub-hosted** (`ubuntu-latest`) so metering does not depend on usejoy being online.
 
 Pass `final-runner: ""` for the older two-way switch (GitHub until the full allowance, then Blacksmith).
 
@@ -28,9 +28,9 @@ Upstream lineage, as documented there:
 | `fallback-on-error` | Prefer fallback over hard-failing CI when the check breaks |
 | Serial `concurrency` group on determine-runner | Avoid racing parallel workflows when choice must be consistent |
 
-### Recommended: reusable workflow (detect on usejoy)
+### Recommended: reusable workflow (detect on GitHub-hosted)
 
-Defaults: 80% GitHub (`2000`), 80% Blacksmith (`3000`), final `usejoy-2vcpu-ubuntu-2404`, detect job on that same usejoy label.
+Defaults: detect on `ubuntu-latest`; work jobs 80% GitHub (`2000`) → 80% Blacksmith (`3000`) → final `usejoy-2vcpu-ubuntu-2404`.
 
 ```yaml
 jobs:
@@ -52,12 +52,12 @@ jobs:
 
 ### Inline composite (same defaults)
 
-Run the detect job on usejoy (`final-runner` default). Only `github-token` is required; pass `blacksmith-api-token` so the Blacksmith pool is metered.
+Run the detect job on `ubuntu-latest`. Only `github-token` is required; pass `blacksmith-api-token` so the Blacksmith pool is metered.
 
 ```yaml
 jobs:
   determine-runner:
-    runs-on: usejoy-2vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     concurrency:
       group: runner-determination
       cancel-in-progress: false
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v4
 ```
 
-Replace `usejoy-2vcpu-ubuntu-2404` if your usejoy install registers a different label. Opt out of chain with `final-runner: ""` (two-way GitHub→Blacksmith; put detect on `ubuntu-latest` or Blacksmith).
+Replace `usejoy-2vcpu-ubuntu-2404` if your usejoy install registers a different label. Opt out of chain with `final-runner: ""` (two-way GitHub→Blacksmith).
 
 ### What we changed
 

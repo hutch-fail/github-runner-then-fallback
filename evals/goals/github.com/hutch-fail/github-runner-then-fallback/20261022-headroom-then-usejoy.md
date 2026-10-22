@@ -13,15 +13,15 @@ solver: none
 
 The action defaults to a headroom chain: GitHub up to 80% of 2000 included
 minutes, Blacksmith up to 80% of 3000, then usejoy for overage. A reusable
-workflow runs the detect job on usejoy by default. Two-way remains available
-with `final-runner: ""`.
+workflow runs the detect job on GitHub-hosted (`ubuntu-latest`) by default.
+Two-way remains available with `final-runner: ""`.
 
 # Decision
 
 A pass lets us claim those defaults are wired in `action.yml`, the reusable
-`determine-runner.yml` meters on usejoy, offline `choose_runner` covers 80/80/final,
-and docs describe the default chain. A pass does not prove live billing or
-Blacksmith CLI auth against production tokens.
+`determine-runner.yml` detects on `ubuntu-latest`, offline `choose_runner`
+covers 80/80/final, and docs describe the default chain. A pass does not prove
+live billing or Blacksmith CLI auth against production tokens.
 
 # User outcome
 
@@ -42,7 +42,7 @@ is true.
 | Criterion | What we look at |
 | --- | --- |
 | Sensible defaults on the action | `final-runner`→usejoy, threshold 80, included 2000, blacksmith 3000, primary/fallback labels |
-| Reusable detect on usejoy | `.github/workflows/determine-runner.yml` defaults to usejoy |
+| Reusable detect on GitHub-hosted | `.github/workflows/determine-runner.yml` `detect-runner` defaults to `ubuntu-latest` |
 | Required CI is bootstrap-safe | `ci.yml` pins `ubuntu-latest` and does not call the picker |
 | Non-blocking live smoke | `smoke-determine-runner.yml` uses the reusable workflow with `continue-on-error` |
 | Pure choice implements 80/80/final | `choose_runner` / `under_headroom`; fixture asserts cases |

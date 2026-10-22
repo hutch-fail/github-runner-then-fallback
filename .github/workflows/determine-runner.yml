@@ -1,5 +1,5 @@
-# Reusable determine-runner job: meters on usejoy by default so the detect job
-# does not spend GitHub Actions or Blacksmith free minutes.
+# Reusable determine-runner job: detect on GitHub-hosted by default; work jobs
+# follow the chain (GHA → Blacksmith → usejoy).
 name: Determine runner
 
 on:
@@ -17,19 +17,18 @@ on:
         default: blacksmith-2vcpu-ubuntu-2404
       final-runner:
         description: >-
-          Final overage labels (usejoy). Also used as this job's runs-on.
-          Pass empty string for two-way GitHub→Blacksmith only (job then runs
-          on ubuntu-latest for the meter step).
+          Final overage labels (usejoy). Pass empty string for two-way
+          GitHub→Blacksmith only.
         type: string
         required: false
         default: usejoy-2vcpu-ubuntu-2404
       detect-runner:
         description: >-
-          Label for this determine-runner job. Defaults to final-runner when
-          that is non-empty, else ubuntu-latest.
+          Label for this determine-runner (meter) job. Defaults to
+          ubuntu-latest so detection always has a registered runner.
         type: string
         required: false
-        default: ""
+        default: ubuntu-latest
       included-minutes:
         type: string
         required: false
@@ -81,9 +80,7 @@ on:
 
 jobs:
   determine:
-    # Prefer usejoy (final-runner) for metering; fall back to ubuntu-latest if
-    # the caller disabled chain with an empty final-runner.
-    runs-on: ${{ inputs.detect-runner != '' && inputs.detect-runner || (inputs.final-runner != '' && inputs.final-runner || 'ubuntu-latest') }}
+    runs-on: ${{ inputs.detect-runner != '' && inputs.detect-runner || 'ubuntu-latest' }}
     continue-on-error: ${{ inputs.continue-on-error }}
     concurrency:
       group: runner-determination-${{ github.workflow }}-${{ github.job }}

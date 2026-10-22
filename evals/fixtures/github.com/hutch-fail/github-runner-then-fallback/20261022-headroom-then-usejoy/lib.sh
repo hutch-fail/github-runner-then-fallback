@@ -50,7 +50,16 @@ assert_docs_and_workflow() {
   grep -Eq 'determine-runner' "${readme}" || miss "README missing determine-runner example"
 
   [[ -f "${wf}" ]] || miss "missing reusable determine-runner.yml"
-  grep -Eq 'usejoy-2vcpu-ubuntu-2404' "${wf}" || miss "determine-runner.yml should default detect/final to usejoy"
+  grep -Eq 'default:[[:space:]]*usejoy-2vcpu-ubuntu-2404' "${wf}" \
+    || miss "determine-runner.yml final-runner should default to usejoy"
+  grep -Eq '^[[:space:]]+detect-runner:' "${wf}" \
+    || miss "determine-runner.yml missing detect-runner input"
+  detect_default="$(awk '/^[[:space:]]+detect-runner:/{p=1; next} p && /^[[:space:]]+default:/{print $2; exit}' "${wf}")"
+  [[ "${detect_default}" == "ubuntu-latest" ]] \
+    || miss "determine-runner.yml detect-runner should default to ubuntu-latest (got ${detect_default:-empty})"
+  if grep -Eq 'runs-on:.*inputs\.final-runner' "${wf}"; then
+    miss "determine job runs-on must not use final-runner (detect is GitHub-hosted)"
+  fi
 
   [[ -f "${ci}" ]] || miss "missing ci.yml"
   grep -Eq 'runs-on:[[:space:]]*ubuntu-latest' "${ci}" || miss "ci.yml must pin ubuntu-latest (bootstrap)"

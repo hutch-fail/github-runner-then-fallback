@@ -22,8 +22,6 @@ if grep -Eq '^[[:space:]]{4}continue-on-error:' "${smoke}"; then
 fi
 grep -Eq '^[[:space:]]{6,}continue-on-error:[[:space:]]*true' "${smoke}" \
   || miss "smoke must pass continue-on-error: true under with:"
-grep -Eq 'detect-runner:[[:space:]]*(ubuntu-|blacksmith-)' "${smoke}" \
-  || miss "smoke must set detect-runner to a registered label (not default usejoy)"
 
 grep -Eq 'path:[[:space:]]*_github-runner-then-fallback' "${wf}" \
   || miss "determine-runner.yml must checkout action tree to _github-runner-then-fallback"
