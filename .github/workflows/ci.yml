@@ -5,25 +5,17 @@ on:
     branches: [main]
   pull_request:
 
-# This action repo CI is Blacksmith-only — do not dogfood prefer-GHA here.
+# Bootstrap CI: pin GitHub-hosted runners. Required tests must not invoke the
+# picker workflow — a broken picker / missing usejoy / billing failure must not
+# block shipping fixes. Live picker coverage is smoke-determine-runner.yml only.
 jobs:
   test:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Offline helper tests
         run: bash tests/test_decide_helpers.sh
       - name: Shellcheck decide.sh
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
-          shellcheck scripts/decide.sh
+        run: bash tests/run_shellcheck.sh
       - name: action.yml has required inputs/outputs
-        run: |
-          set -euo pipefail
-          grep -q 'primary-runner:' action.yml
-          grep -q 'fallback-runner:' action.yml
-          grep -q 'included-minutes:' action.yml
-          grep -q 'github-token:' action.yml
-          grep -q 'use-runner:' action.yml
-          grep -q 'using: composite' action.yml
+        run: bash tests/assert_action_yml.sh

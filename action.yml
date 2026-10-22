@@ -7,8 +7,9 @@
 # Not a fork — see README "Credit and adaptation".
 name: GitHub Runner Then Fallback
 description: >-
-  Prefer GitHub-hosted runners while included Actions minutes remain; otherwise
-  emit a fallback runner label (e.g. Blacksmith).
+  Prefer GitHub-hosted runners up to 80% of included Actions minutes, then
+  Blacksmith up to 80% of its included minutes, then a final runner (usejoy)
+  for overage. Pass final-runner: "" to keep a two-way GitHub→Blacksmith switch.
 author: hutch-fail
 branding:
   icon: activity
@@ -17,25 +18,27 @@ branding:
 inputs:
   primary-runner:
     description: >-
-      Comma-separated labels for the primary runner while under included minutes
-      (e.g. ubuntu-latest or ubuntu-24.04).
-    required: true
+      Comma-separated labels for the primary runner while under the GitHub
+      headroom threshold (e.g. ubuntu-latest or ubuntu-24.04).
+    required: false
+    default: ubuntu-latest
   fallback-runner:
     description: >-
-      Comma-separated labels for the fallback runner when included minutes are
-      exhausted (e.g. blacksmith-2vcpu-ubuntu-2404).
-    required: true
+      Comma-separated labels for the Blacksmith (or other) runner while under
+      the Blacksmith headroom threshold.
+    required: false
+    default: blacksmith-2vcpu-ubuntu-2404
   included-minutes:
     description: >-
       Included/free Actions Linux minutes budget for the current billing period.
-      Compare against org usage; not returned by the billing API. Consumers
-      typically pass vars.ACTIONS_INCLUDED_MINUTES (Free org default: 2000).
-    required: true
+      Compare against org usage; not returned by the billing API. Free org
+      default: 2000. Override with vars.ACTIONS_INCLUDED_MINUTES when needed.
+    required: false
+    default: "2000"
   github-token:
     description: >-
-      Token that can read org enhanced billing usage (classic PAT with admin:org,
-      or fine-grained token with Organization Administration read). GITHUB_TOKEN
-      is not sufficient.
+      Token that can read org enhanced billing usage (classic PAT with admin:org).
+      GITHUB_TOKEN is not sufficient. Typically secrets.ORG_BILLING_TOKEN.
     required: true
   organization:
     description: >-
@@ -45,10 +48,42 @@ inputs:
     default: ""
   fallback-on-error:
     description: >-
-      If true, emit the fallback runner when the billing check fails (bad token,
-      API error, etc.) instead of failing the step.
+      If true, emit the last-resort runner when a required check fails (bad
+      token, API error, etc.) instead of failing the step. Chain mode emits
+      final-runner; two-way (final-runner empty) emits fallback-runner.
     required: false
     default: "true"
+  final-runner:
+    description: >-
+      Comma-separated labels for the final runner when both GitHub and Blacksmith
+      are at or past the usage-threshold headroom (usejoy). Non-empty enables
+      chain mode (the default). Pass an empty string to disable chain and use
+      two-way GitHub→fallback only. Run the determine-runner job on this same
+      label so metering does not spend GitHub or Blacksmith minutes.
+    required: false
+    default: usejoy-2vcpu-ubuntu-2404
+  usage-threshold:
+    description: >-
+      Percent of each configured allowance to use before leaving that pool
+      (chain mode). Default 80 — leave 20% headroom. Ignored when final-runner
+      is empty (two-way).
+    required: false
+    default: "80"
+  blacksmith-included-minutes:
+    description: >-
+      Included/free Blacksmith billable minutes for the period (chain mode).
+      Not returned by the official CLI; pricing page default is 3000 x64 2vCPU
+      minutes per org per month. If empty, the Blacksmith pool is skipped.
+    required: false
+    default: "3000"
+  blacksmith-api-token:
+    description: >-
+      Blacksmith organization token (from `blacksmith org-token create`) used
+      with the official CLI to read current-month billable minutes. Chain mode
+      only. If unset, the Blacksmith pool is skipped and overage goes to
+      final-runner.
+    required: false
+    default: ""
 
 outputs:
   use-runner:
@@ -70,4 +105,8 @@ runs:
         INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
         INPUT_ORGANIZATION: ${{ inputs.organization }}
         INPUT_FALLBACK_ON_ERROR: ${{ inputs.fallback-on-error }}
+        INPUT_FINAL_RUNNER: ${{ inputs.final-runner }}
+        INPUT_USAGE_THRESHOLD: ${{ inputs.usage-threshold }}
+        INPUT_BLACKSMITH_INCLUDED_MINUTES: ${{ inputs.blacksmith-included-minutes }}
+        INPUT_BLACKSMITH_API_TOKEN: ${{ inputs.blacksmith-api-token }}
       run: bash "${{ github.action_path }}/scripts/decide.sh"

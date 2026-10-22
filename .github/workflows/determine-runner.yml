@@ -1,0 +1,89 @@
+# Reusable determine-runner job: meters on usejoy by default so the detect job
+# does not spend GitHub Actions or Blacksmith free minutes.
+name: Determine runner
+
+on:
+  workflow_call:
+    inputs:
+      primary-runner:
+        description: GitHub-hosted labels while under Actions headroom
+        type: string
+        required: false
+        default: ubuntu-latest
+      fallback-runner:
+        description: Blacksmith labels while under Blacksmith headroom
+        type: string
+        required: false
+        default: blacksmith-2vcpu-ubuntu-2404
+      final-runner:
+        description: >-
+          Final overage labels (usejoy). Also used as this job's runs-on.
+          Pass empty string for two-way GitHub→Blacksmith only (job then runs
+          on ubuntu-latest for the meter step).
+        type: string
+        required: false
+        default: usejoy-2vcpu-ubuntu-2404
+      detect-runner:
+        description: >-
+          Label for this determine-runner job. Defaults to final-runner when
+          that is non-empty, else ubuntu-latest.
+        type: string
+        required: false
+        default: ""
+      included-minutes:
+        type: string
+        required: false
+        default: "2000"
+      blacksmith-included-minutes:
+        type: string
+        required: false
+        default: "3000"
+      usage-threshold:
+        type: string
+        required: false
+        default: "80"
+      organization:
+        type: string
+        required: false
+        default: ""
+      fallback-on-error:
+        type: string
+        required: false
+        default: "true"
+    secrets:
+      ORG_BILLING_TOKEN:
+        description: Classic PAT with admin:org for GitHub billing usage
+        required: true
+      BLACKSMITH_API_TOKEN:
+        description: Blacksmith org token for usage CLI (chain mode)
+        required: false
+    outputs:
+      runner:
+        description: JSON label list for fromJson(runs-on)
+        value: ${{ jobs.determine.outputs.runner }}
+
+jobs:
+  determine:
+    # Prefer usejoy (final-runner) for metering; fall back to ubuntu-latest if
+    # the caller disabled chain with an empty final-runner.
+    runs-on: ${{ inputs.detect-runner != '' && inputs.detect-runner || (inputs.final-runner != '' && inputs.final-runner || 'ubuntu-latest') }}
+    concurrency:
+      group: runner-determination-${{ github.workflow }}-${{ github.job }}
+      cancel-in-progress: false
+    outputs:
+      runner: ${{ steps.set-runner.outputs.use-runner }}
+    steps:
+      - id: set-runner
+        # Same ref as this reusable workflow (not a released @v1 pin).
+        uses: ./
+        with:
+          primary-runner: ${{ inputs.primary-runner }}
+          fallback-runner: ${{ inputs.fallback-runner }}
+          final-runner: ${{ inputs.final-runner }}
+          usage-threshold: ${{ inputs.usage-threshold }}
+          included-minutes: ${{ inputs.included-minutes }}
+          blacksmith-included-minutes: ${{ inputs.blacksmith-included-minutes }}
+          github-token: ${{ secrets.ORG_BILLING_TOKEN }}
+          blacksmith-api-token: ${{ secrets.BLACKSMITH_API_TOKEN }}
+          organization: ${{ inputs.organization }}
+          fallback-on-error: ${{ inputs.fallback-on-error }}
