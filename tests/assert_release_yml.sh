@@ -4,13 +4,22 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 f="${ROOT}/.github/workflows/release.yml"
+rc="${ROOT}/.releaserc.yml"
 [[ -f "$f" ]] || {
   echo "missing .github/workflows/release.yml" >&2
+  exit 1
+}
+[[ -f "$rc" ]] || {
+  echo "missing .releaserc.yml (committed SoT; do not generate in CI)" >&2
   exit 1
 }
 
 if grep -Eq 'uses:[[:space:]]*hutch-fail/actions/' "$f"; then
   echo "release.yml must not uses: private hutch-fail/actions (public caller)" >&2
+  exit 1
+fi
+if grep -Eq 'write-releaserc' "$f"; then
+  echo "release.yml must not write .releaserc.yml at runtime" >&2
   exit 1
 fi
 grep -Eq 'semantic-release' "$f" || {

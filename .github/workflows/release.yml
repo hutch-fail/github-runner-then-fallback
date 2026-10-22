@@ -3,6 +3,7 @@
 # private repo (hutch-fail/actions) — runs fail with "workflow was not found".
 # Private siblings keep the thin uses: pin to hutch-fail/actions.
 # Pin ubuntu-latest (ship gate): do not call determine-runner here.
+# Config: committed .releaserc.yml (no CHANGELOG file).
 name: release
 
 on:
@@ -38,9 +39,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/ensure-release-labels.sh
-
-      - name: Write semantic-release config (no CHANGELOG file)
-        run: bash scripts/write-releaserc.sh
 
       - name: Release
         env:

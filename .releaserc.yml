@@ -1,7 +1,3 @@
-#!/usr/bin/env bash
-# Write .releaserc.yml for semantic-release (no CHANGELOG file).
-set -euo pipefail
-cat > .releaserc.yml <<'EOF'
 branches:
   - main
 tagFormat: "v${version}"
@@ -17,4 +13,3 @@ plugins:
       releasedLabels:
         - released
       assets: []
-EOF
