@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# F2P: default headroom chain (GHA → Blacksmith → usejoy) is wired.
+# F2P: default headroom chain (GHA → Blacksmith → Jog) is wired.
 set -euo pipefail
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null

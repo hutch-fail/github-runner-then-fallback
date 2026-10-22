@@ -17,8 +17,8 @@ assert_action_defaults() {
   grep -q '^  blacksmith-api-token:' "${action}" || miss "action.yml missing blacksmith-api-token"
   grep -q 'INPUT_FINAL_RUNNER' "${action}" || miss "action.yml does not pass INPUT_FINAL_RUNNER"
 
-  grep -Eq 'default:[[:space:]]*usejoy-2vcpu-ubuntu-2404' "${action}" \
-    || miss "action.yml final-runner should default to usejoy-2vcpu-ubuntu-2404"
+  grep -Eq 'default:[[:space:]]*jog[[:space:]]*$' "${action}" \
+    || miss "action.yml final-runner should default to jog (usejog.com)"
   grep -Eq 'default:[[:space:]]*"80"' "${action}" \
     || miss "action.yml usage-threshold should default to 80"
   grep -Eq 'default:[[:space:]]*"2000"' "${action}" \
@@ -50,8 +50,8 @@ assert_docs_and_workflow() {
   grep -Eq 'determine-runner' "${readme}" || miss "README missing determine-runner example"
 
   [[ -f "${wf}" ]] || miss "missing reusable determine-runner.yml"
-  grep -Eq 'default:[[:space:]]*usejoy-2vcpu-ubuntu-2404' "${wf}" \
-    || miss "determine-runner.yml final-runner should default to usejoy"
+  grep -Eq 'default:[[:space:]]*jog[[:space:]]*$' "${wf}" \
+    || miss "determine-runner.yml final-runner should default to jog (usejog.com)"
   grep -Eq '^[[:space:]]+detect-runner:' "${wf}" \
     || miss "determine-runner.yml missing detect-runner input"
   detect_default="$(awk '/^[[:space:]]+detect-runner:/{p=1; next} p && /^[[:space:]]+default:/{print $2; exit}' "${wf}")"
