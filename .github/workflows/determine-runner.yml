@@ -50,6 +50,14 @@ on:
         type: string
         required: false
         default: "true"
+      continue-on-error:
+        description: >-
+          When true, the determine job is marked continue-on-error (for non-blocking
+          smoke). Must live here — callers cannot set continue-on-error on a job
+          that uses a reusable workflow.
+        type: boolean
+        required: false
+        default: false
     secrets:
       ORG_BILLING_TOKEN:
         description: Classic PAT with admin:org for GitHub billing usage
@@ -67,6 +75,7 @@ jobs:
     # Prefer usejoy (final-runner) for metering; fall back to ubuntu-latest if
     # the caller disabled chain with an empty final-runner.
     runs-on: ${{ inputs.detect-runner != '' && inputs.detect-runner || (inputs.final-runner != '' && inputs.final-runner || 'ubuntu-latest') }}
+    continue-on-error: ${{ inputs.continue-on-error }}
     concurrency:
       group: runner-determination-${{ github.workflow }}-${{ github.job }}
       cancel-in-progress: false

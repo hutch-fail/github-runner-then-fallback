@@ -59,7 +59,12 @@ assert_docs_and_workflow() {
   fi
 
   [[ -f "${smoke}" ]] || miss "missing smoke-determine-runner.yml"
-  grep -Eq 'continue-on-error:[[:space:]]*true' "${smoke}" || miss "smoke must be continue-on-error"
+  # Caller cannot set job-level continue-on-error with uses:; pass under with:.
+  if grep -Eq '^[[:space:]]{4}continue-on-error:' "${smoke}"; then
+    miss "smoke must not set job-level continue-on-error (invalid with uses:)"
+  fi
+  grep -Eq '^[[:space:]]{6,}continue-on-error:[[:space:]]*true' "${smoke}" \
+    || miss "smoke must pass continue-on-error: true under with:"
 }
 
 assert_choose_runner_cases() {
