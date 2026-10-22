@@ -15,7 +15,7 @@ This repository is **public**. GitHub forbids calling a reusable workflow from a
 **private** repository (`hutch-fail/actions`). Release must therefore be a
 self-contained workflow on `ubuntu-latest` that still runs semantic-release
 (GitHub Releases, no CHANGELOG file). Detect/picker is intentionally not used
-here (same bootstrap rule as `ci.yml`).
+here (same ship-gate rule as `ci.yml`).
 
 # Decision
 

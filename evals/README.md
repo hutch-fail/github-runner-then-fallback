@@ -151,13 +151,17 @@ Scoping and reusable CI design: [`docs/scoping.md`](docs/scoping.md).
 
 ## Releases
 
-This hub’s versions are cut by a thin
-[`.github/workflows/release.yml`](.github/workflows/release.yml) that calls
-[`hutch-fail/actions`](https://github.com/hutch-fail/actions) reusable
-semantic-release (org-wide Actions home). GitHub Release + notes, PR/issue
-comments, `released` label; **no** in-repo `CHANGELOG.md`. Stub copy:
+This hub’s versions are cut by
+[`.github/workflows/release.yml`](.github/workflows/release.yml): a
+**self-contained** semantic-release job on `ubuntu-latest`. This repository is
+public, so it cannot `uses:` the private
+[`hutch-fail/actions`](https://github.com/hutch-fail/actions) reusable (GitHub
+returns “workflow was not found”). Private sibling hosts keep the thin
+`uses:` pin from
 [`templates/github-workflows/release.yml`](templates/github-workflows/release.yml).
-Prefer `@vX.Y.Z` once tags exist (same idea for eval `hub_ref` pins).
+GitHub Release + notes, PR/issue comments, `released` label; **no** in-repo
+`CHANGELOG.md`. Prefer `@vX.Y.Z` once tags exist (same idea for eval `hub_ref`
+pins).
 
 ## Schema
 

@@ -19,3 +19,5 @@ jobs:
         run: bash tests/run_shellcheck.sh
       - name: action.yml has required inputs/outputs
         run: bash tests/assert_action_yml.sh
+      - name: release.yml is self-contained (public repo)
+        run: bash tests/assert_release_yml.sh
