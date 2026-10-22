@@ -58,8 +58,8 @@ inputs:
       Comma-separated labels for the final runner when both GitHub and Blacksmith
       are at or past the usage-threshold headroom (usejoy). Non-empty enables
       chain mode (the default). Pass an empty string to disable chain and use
-      two-way GitHub→fallback only. Run the determine-runner job on this same
-      label so metering does not spend GitHub or Blacksmith minutes.
+      two-way GitHub→fallback only. The determine-runner (detect) job itself
+      defaults to ubuntu-latest so metering does not depend on usejoy.
     required: false
     default: usejoy-2vcpu-ubuntu-2404
   usage-threshold:

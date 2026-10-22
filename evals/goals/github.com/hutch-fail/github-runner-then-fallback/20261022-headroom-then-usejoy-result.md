@@ -7,8 +7,8 @@ status: pass
 # Executive outcome
 
 Default headroom chain is wired: 80% of GitHub (2000), 80% of Blacksmith (3000),
-then usejoy; reusable `determine-runner.yml` meters on usejoy. Required `ci.yml`
-pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
+then usejoy; reusable `determine-runner.yml` detects on `ubuntu-latest`. Required
+`ci.yml` pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
 `continue-on-error`. F2P red on `origin/main`, green on this branch.
 
 # Result
@@ -17,7 +17,7 @@ pins `ubuntu-latest` (no picker catch-22); optional smoke dogfoods with
 
 # Outcome
 
-Pass. Action defaults, reusable detect-on-usejoy workflow, bootstrap-safe
+Pass. Action defaults, reusable detect-on-GitHub-hosted workflow, bootstrap-safe
 `ci.yml`, non-blocking smoke, offline 80/80/final cases, and docs match.
 Two-way remains via `final-runner: ""`.
 
@@ -45,7 +45,7 @@ None.
 
 # Comparison
 
-Main: two-way only, no usejoy default. Branch: chain defaults + detect-on-usejoy reusable workflow.
+Main: two-way only, no usejoy default. Branch: chain defaults + detect on `ubuntu-latest`.
 
 # Evidence and limitations
 
@@ -56,4 +56,4 @@ label is confirmed.
 # Next action
 
 Merge; set org secrets `ORG_BILLING_TOKEN` and `BLACKSMITH_API_TOKEN`. Prefer
-`uses: …/determine-runner.yml@v1` so detect runs on usejoy by default.
+`uses: …/determine-runner.yml@v1` so detect runs on `ubuntu-latest` by default.
