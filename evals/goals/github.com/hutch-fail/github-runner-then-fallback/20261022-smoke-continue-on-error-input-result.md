@@ -15,15 +15,17 @@ job-level `continue-on-error`.
 
 # Outcome
 
-Pass. `determine-runner.yml` exposes a boolean `continue-on-error` input applied
-to the determine job; smoke passes it under `with:`.
+Pass. Smoke is parse-valid via a `continue-on-error` input; cross-repo callers
+checkout the action tree (`action-ref`); Blacksmith CLI install/auth stay on
+stderr so minutes parse cleanly.
 
 # Proof
 
 ```text
 HERMES_EVAL_REPO_ROOT=<origin/main archive> …/check.sh → FAIL (missing input)
 HERMES_EVAL_REPO_ROOT=<branch> …/check.sh → smoke_continue_on_error_input_ok
-actionlint .github/workflows/{determine-runner,smoke-determine-runner}.yml → clean
+machine-layers canary job 120021274438:
+  blacksmith_billable_minutes=11646.0; mode=chain choice=final
 ```
 
 # Manual verification
@@ -32,22 +34,21 @@ actionlint .github/workflows/{determine-runner,smoke-determine-runner}.yml → c
 | --- | --- | --- | --- |
 | actionlint on smoke + reusable | no syntax errors | F2P check.sh | hermetic |
 | Main push smoke run 39833149845 | workflow file issue, zero jobs | F2P rejects job-level key | live-proof (pre-fix) |
+| machine-layers PR #165 determine | choice=final with clean minutes | consumer canary | live-proof |
 
 # Blocking findings
 
-None.
+None for this pack. usejoy label still unregistered org-wide.
 
 # Comparison
 
-Main: smoke set job-level `continue-on-error` next to `uses:` → parse failure.
-Branch: input on reusable workflow; smoke passes `with: continue-on-error: true`.
+Main: job-level `continue-on-error` + bare `uses: ./` broke callers.
+Branch: input tolerance, checkout + `./_github-runner-then-fallback`, stderr-clean CLI.
 
 # Evidence and limitations
 
-Does not yet prove usejoy is online; only that smoke is parse-valid and
-non-blocking when the determine job fails.
+Consumer canary keeps `final-runner` on Blacksmith until usejoy exists.
 
 # Next action
 
-Merge; watch smoke on main for a real `use-runner` log line. Then pin a
-consumer to this SHA for a live chain test.
+Merge; retarget machine-layers pin to the merge commit on main.
