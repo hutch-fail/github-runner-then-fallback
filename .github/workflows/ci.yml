@@ -14,16 +14,6 @@ jobs:
       - name: Offline helper tests
         run: bash tests/test_decide_helpers.sh
       - name: Shellcheck decide.sh
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
-          shellcheck scripts/decide.sh
+        run: bash tests/run_shellcheck.sh
       - name: action.yml has required inputs/outputs
-        run: |
-          set -euo pipefail
-          grep -q 'primary-runner:' action.yml
-          grep -q 'fallback-runner:' action.yml
-          grep -q 'included-minutes:' action.yml
-          grep -q 'github-token:' action.yml
-          grep -q 'use-runner:' action.yml
-          grep -q 'using: composite' action.yml
+        run: bash tests/assert_action_yml.sh

@@ -2,6 +2,8 @@
 
 Prefer **GitHub-hosted** runners while included/free Actions minutes remain, then fall back to another label (typically **Blacksmith**).
 
+Optional **chain mode** (when `final-runner` is set): use GitHub while under a headroom threshold of the Actions allowance, then Blacksmith while under the same threshold of its allowance, then emit a final label (e.g. **usejoy**) for paid minutes.
+
 ## Credit and adaptation
 
 This action is **adapted from** [mikehardy/runner-fallback-action](https://github.com/mikehardy/runner-fallback-action) by [Mike Hardy](https://github.com/mikehardy). That project (and its predecessors) deserve the credit for the workflow pattern we reuse.
@@ -26,7 +28,7 @@ Upstream lineage, as documented there:
 | `fallback-on-error` | Prefer fallback over hard-failing CI when the check breaks |
 | Serial `concurrency` group on determine-runner | Avoid racing parallel workflows when choice must be consistent |
 
-Example consumer shape (same structure as upstream’s README):
+Example consumer shape — **two-way** (default; same structure as upstream’s README):
 
 ```yaml
 jobs:
@@ -54,6 +56,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 ```
+
+Example — **chain mode** (headroom on GitHub and Blacksmith, then usejoy). Run the detect job on the final (usejoy) label so metering does not spend GitHub or Blacksmith minutes:
+
+```yaml
+jobs:
+  determine-runner:
+    runs-on: usejoy-2vcpu-ubuntu-2404   # same label as final-runner
+    concurrency:
+      group: runner-determination
+      cancel-in-progress: false
+    outputs:
+      runner: ${{ steps.set-runner.outputs.use-runner }}
+    steps:
+      - id: set-runner
+        uses: hutch-fail/github-runner-then-fallback@v1
+        with:
+          primary-runner: ubuntu-latest
+          fallback-runner: blacksmith-2vcpu-ubuntu-2404
+          final-runner: usejoy-2vcpu-ubuntu-2404
+          usage-threshold: "80"
+          included-minutes: ${{ vars.ACTIONS_INCLUDED_MINUTES }}
+          blacksmith-included-minutes: ${{ vars.BLACKSMITH_INCLUDED_MINUTES }}
+          github-token: ${{ secrets.ORG_BILLING_TOKEN }}
+          blacksmith-api-token: ${{ secrets.BLACKSMITH_API_TOKEN }}
+          organization: hutch-fail
+          fallback-on-error: "true"
+
+  build:
+    needs: determine-runner
+    runs-on: ${{ fromJson(needs.determine-runner.outputs.runner) }}
+    steps:
+      - uses: actions/checkout@v4
+```
+
+Replace `usejoy-2vcpu-ubuntu-2404` with the runner label your usejoy install registers.
 
 ### What we changed
 
@@ -88,13 +125,21 @@ There is **no API field for “included minutes remaining.”** Usage exposes mi
 
 So consumers set the included/free budget explicitly (org plan allowance), typically via repository/org variable `ACTIONS_INCLUDED_MINUTES` (GitHub Free orgs: **2000** private-repo minutes/month).
 
-Decision:
+Decision (**two-way**, `final-runner` empty):
 
 1. Read current-period `actions_linux` `grossQuantity` from the usage **summary** API
 2. If `used < included-minutes` → emit **primary**
 3. Else → emit **fallback**
 
-Token must be a **classic** PAT owned by an org owner or billing manager, with `admin:org`. Enhanced billing **usage** APIs do **not** support fine-grained PATs. Default `GITHUB_TOKEN` is **not** enough.
+Decision (**chain**, `final-runner` set; default `usage-threshold` = 80):
+
+1. Same GitHub meter; if `used < included-minutes * threshold/100` → emit **primary**
+2. Else read Blacksmith current-month billable minutes via the official CLI (`blacksmith usage`) and org token; if under the same threshold of `blacksmith-included-minutes` → emit **fallback**
+3. Else → emit **final** (usejoy). GitHub meter failure skips to Blacksmith; Blacksmith meter failure emits final. `fallback-on-error: false` still fails the step.
+
+Neither GitHub nor the Blacksmith CLI returns minutes remaining. Allowances stay configured inputs (`included-minutes`, `blacksmith-included-minutes`). Blacksmith’s pricing page documents **3000** x64 2vCPU free minutes per org per month.
+
+GitHub token must be a **classic** PAT owned by an org owner or billing manager, with `admin:org`. Enhanced billing **usage** APIs do **not** support fine-grained PATs. Default `GITHUB_TOKEN` is **not** enough.
 
 ## Pin
 
@@ -109,12 +154,16 @@ See [Releases](https://github.com/hutch-fail/github-runner-then-fallback/release
 
 | Input | Required | Description |
 | --- | --- | --- |
-| `primary-runner` | yes | Labels while under budget (e.g. `ubuntu-latest`) |
-| `fallback-runner` | yes | Labels when budget exhausted (e.g. `blacksmith-2vcpu-ubuntu-2404`) |
+| `primary-runner` | yes | Labels while under GitHub budget (e.g. `ubuntu-latest`) |
+| `fallback-runner` | yes | Labels when GitHub budget exhausted (e.g. `blacksmith-2vcpu-ubuntu-2404`) |
 | `included-minutes` | yes | Included/free Linux Actions minutes for the period |
 | `github-token` | yes | Billing-capable token (not `GITHUB_TOKEN`) |
 | `organization` | no | Org login; defaults to `GITHUB_REPOSITORY` owner |
-| `fallback-on-error` | no | Default `true` — use fallback if the billing check fails |
+| `fallback-on-error` | no | Default `true` — last-resort runner if a required check fails |
+| `final-runner` | no | Empty = two-way. Set (e.g. usejoy label) to enable chain mode |
+| `usage-threshold` | no | Chain only; default `80` (percent of each allowance) |
+| `blacksmith-included-minutes` | no | Chain; configured Blacksmith free minutes (e.g. `3000`) |
+| `blacksmith-api-token` | no | Chain; Blacksmith org token for `blacksmith usage` |
 
 ## Output
 
@@ -128,6 +177,8 @@ See [Releases](https://github.com/hutch-fail/github-runner-then-fallback/release
 | --- | --- | --- |
 | `ORG_BILLING_TOKEN` (name up to you) | **secret** | Token that can read org enhanced billing usage |
 | `ACTIONS_INCLUDED_MINUTES` | **variable** | Included Linux Actions minutes (e.g. `2000`); passed as `included-minutes` |
+| `BLACKSMITH_API_TOKEN` | **secret** | Chain mode; org token from `blacksmith org-token create` |
+| `BLACKSMITH_INCLUDED_MINUTES` | **variable** | Chain mode; Blacksmith free minutes (e.g. `3000`) |
 
 ## This repository’s CI
 

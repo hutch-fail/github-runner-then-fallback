@@ -8,7 +8,8 @@
 name: GitHub Runner Then Fallback
 description: >-
   Prefer GitHub-hosted runners while included Actions minutes remain; otherwise
-  emit a fallback runner label (e.g. Blacksmith).
+  emit a fallback runner label (e.g. Blacksmith). Optional chain: leave headroom
+  on GitHub and Blacksmith, then emit a final runner (e.g. usejoy).
 author: hutch-fail
 branding:
   icon: activity
@@ -23,7 +24,8 @@ inputs:
   fallback-runner:
     description: >-
       Comma-separated labels for the fallback runner when included minutes are
-      exhausted (e.g. blacksmith-2vcpu-ubuntu-2404).
+      exhausted (e.g. blacksmith-2vcpu-ubuntu-2404). In chain mode (final-runner
+      set), used while under the Blacksmith headroom threshold.
     required: true
   included-minutes:
     description: >-
@@ -45,10 +47,40 @@ inputs:
     default: ""
   fallback-on-error:
     description: >-
-      If true, emit the fallback runner when the billing check fails (bad token,
-      API error, etc.) instead of failing the step.
+      If true, emit the last-resort runner when a required check fails (bad
+      token, API error, etc.) instead of failing the step. Two-way mode emits
+      fallback-runner; chain mode (final-runner set) emits final-runner.
     required: false
     default: "true"
+  final-runner:
+    description: >-
+      Optional. Comma-separated labels for the final runner when both GitHub and
+      Blacksmith are at or past the usage-threshold headroom (e.g. a usejoy
+      label). When set, enables chain mode. When empty, behavior stays two-way
+      (GitHub until included-minutes, then fallback-runner).
+    required: false
+    default: ""
+  usage-threshold:
+    description: >-
+      Percent of each configured allowance to use before leaving that pool
+      (chain mode only). Default 80 — leave 20% headroom. Ignored in two-way mode.
+    required: false
+    default: "80"
+  blacksmith-included-minutes:
+    description: >-
+      Included/free Blacksmith billable minutes for the period (chain mode).
+      Not returned by the official CLI; pricing page default is 3000 x64 2vCPU
+      minutes per org per month. Required for the Blacksmith step of the chain;
+      if unset with final-runner set, the Blacksmith pool is skipped.
+    required: false
+    default: ""
+  blacksmith-api-token:
+    description: >-
+      Blacksmith organization token (from `blacksmith org-token create`) used
+      with the official CLI to read current-month billable minutes. Chain mode
+      only. If unset with final-runner set, the Blacksmith pool is skipped.
+    required: false
+    default: ""
 
 outputs:
   use-runner:
@@ -70,4 +102,8 @@ runs:
         INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
         INPUT_ORGANIZATION: ${{ inputs.organization }}
         INPUT_FALLBACK_ON_ERROR: ${{ inputs.fallback-on-error }}
+        INPUT_FINAL_RUNNER: ${{ inputs.final-runner }}
+        INPUT_USAGE_THRESHOLD: ${{ inputs.usage-threshold }}
+        INPUT_BLACKSMITH_INCLUDED_MINUTES: ${{ inputs.blacksmith-included-minutes }}
+        INPUT_BLACKSMITH_API_TOKEN: ${{ inputs.blacksmith-api-token }}
       run: bash "${{ github.action_path }}/scripts/decide.sh"
