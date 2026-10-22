@@ -21,6 +21,8 @@ jobs:
     uses: ./.github/workflows/determine-runner.yml
     with:
       continue-on-error: true
+      # Default detect is usejoy; that label is not registered yet — smoke would queue forever.
+      detect-runner: ubuntu-latest
     secrets:
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
       BLACKSMITH_API_TOKEN: ${{ secrets.BLACKSMITH_API_TOKEN }}
