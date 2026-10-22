@@ -58,6 +58,15 @@ on:
         type: boolean
         required: false
         default: false
+      action-ref:
+        description: >-
+          Git ref of hutch-fail/github-runner-then-fallback for the composite
+          action checkout. Cross-repo callers must pass the same SHA/tag used in
+          uses: …/determine-runner.yml@…. Same-repo callers may omit (defaults to
+          github.sha).
+        type: string
+        required: false
+        default: ""
     secrets:
       ORG_BILLING_TOKEN:
         description: Classic PAT with admin:org for GitHub billing usage
@@ -82,9 +91,16 @@ jobs:
     outputs:
       runner: ${{ steps.set-runner.outputs.use-runner }}
     steps:
+      # uses: ./ resolves in the *caller* workspace, not this repo — checkout
+      # the action tree explicitly (same ref as the workflow pin when cross-repo).
+      - name: Checkout action tree
+        uses: actions/checkout@v4
+        with:
+          repository: hutch-fail/github-runner-then-fallback
+          ref: ${{ inputs.action-ref != '' && inputs.action-ref || github.sha }}
+          path: _github-runner-then-fallback
       - id: set-runner
-        # Same ref as this reusable workflow (not a released @v1 pin).
-        uses: ./
+        uses: ./_github-runner-then-fallback
         with:
           primary-runner: ${{ inputs.primary-runner }}
           fallback-runner: ${{ inputs.fallback-runner }}

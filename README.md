@@ -36,6 +36,9 @@ Defaults: 80% GitHub (`2000`), 80% Blacksmith (`3000`), final `usejoy-2vcpu-ubun
 jobs:
   determine-runner:
     uses: hutch-fail/github-runner-then-fallback/.github/workflows/determine-runner.yml@v1
+    with:
+      # Same ref as the uses: pin above (required for cross-repo callers).
+      action-ref: v1
     secrets:
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
       BLACKSMITH_API_TOKEN: ${{ secrets.BLACKSMITH_API_TOKEN }}

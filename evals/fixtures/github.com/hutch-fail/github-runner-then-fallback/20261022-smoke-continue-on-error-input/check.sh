@@ -23,4 +23,12 @@ fi
 grep -Eq '^[[:space:]]{6,}continue-on-error:[[:space:]]*true' "${smoke}" \
   || miss "smoke must pass continue-on-error: true under with:"
 
+grep -Eq 'path:[[:space:]]*_github-runner-then-fallback' "${wf}" \
+  || miss "determine-runner.yml must checkout action tree to _github-runner-then-fallback"
+grep -Eq 'uses:[[:space:]]*\./_github-runner-then-fallback' "${wf}" \
+  || miss "determine-runner.yml must run composite from checked-out path"
+if grep -Eq 'uses:[[:space:]]*\./[[:space:]]*$' "${wf}"; then
+  miss "determine-runner.yml must not use bare uses: ./ (resolves in caller repo)"
+fi
+
 echo smoke_continue_on_error_input_ok
