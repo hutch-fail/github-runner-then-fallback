@@ -18,7 +18,8 @@ concurrency:
 jobs:
   pre-commit:
     if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]'
-    uses: hutch-fail/pre-commit/.github/workflows/pre-commit.yml@dfd996508e0d1d4c06ac904e4ce883600125e0d1
+    uses: hutch-fail/pre-commit/.github/workflows/pre-commit.yml@77030147a25b824e38a5854e1377a3bb28deb750
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
       ORG_BILLING_TOKEN: ${{ secrets.ORG_BILLING_TOKEN }}
+      BLACKSMITH_API_TOKEN: ${{ secrets.BLACKSMITH_API_TOKEN }}
