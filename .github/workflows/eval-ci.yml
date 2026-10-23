@@ -27,10 +27,10 @@ jobs:
     # Skip drafts (CI starts on ready_for_review) and Dependabot.
     if: github.event.pull_request.draft == false && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'renovate[bot]'
     # PIN: replace both @5c075e0dc3e3fc97eafe8c39b47580907adaad4d and hub_ref with the same hutch-fail/evals commit or tag
-    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@5c075e0dc3e3fc97eafe8c39b47580907adaad4d
+    uses: hutch-fail/evals/.github/workflows/eval-ci.yml@eb8be6cdcc36461f658253d485f391e80a8137ce
     with:
       evals_path: evals
-      hub_ref: 5c075e0dc3e3fc97eafe8c39b47580907adaad4d
+      hub_ref: eb8be6cdcc36461f658253d485f391e80a8137ce
     secrets:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
