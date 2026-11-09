@@ -91,6 +91,9 @@ assert_choose_runner_cases() {
   got="$(choose_runner chain 1800 2000 2400 3000 80)"
   [[ "${got}" == "final" ]] || miss "choose_runner expected final at 80% both; got ${got}"
 
+  got="$(choose_runner chain "" 2000 1000 3000 80)"
+  [[ "${got}" == "final" ]] || miss "choose_runner expected final when GHA meter empty (skip Blacksmith); got ${got}"
+
   got="$(choose_runner two-way 1500 2000 "" "" 100)"
   [[ "${got}" == "primary" ]] || miss "two-way default still primary under budget; got ${got}"
 }
