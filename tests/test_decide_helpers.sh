@@ -32,7 +32,7 @@ assert_eq "$(choose_runner chain 1600 2000 100 3000 80)" fallback "chain gha at 
 assert_eq "$(choose_runner chain 1800 2000 1000 3000 80)" fallback "chain gha over 80% bs under 80%"
 assert_eq "$(choose_runner chain 1800 2000 2400 3000 80)" final "chain both at 80% → final"
 assert_eq "$(choose_runner chain 1800 2000 2500 3000 80)" final "chain both over 80% → final"
-assert_eq "$(choose_runner chain "" 2000 1000 3000 80)" fallback "chain gha fail → blacksmith"
+assert_eq "$(choose_runner chain "" 2000 1000 3000 80)" final "chain gha fail → final (skip blacksmith)"
 assert_eq "$(choose_runner chain "" 2000 "" 3000 80)" final "chain both meters fail → final"
 assert_eq "$(choose_runner chain 1800 2000 "" 3000 80)" final "chain bs fail → final"
 

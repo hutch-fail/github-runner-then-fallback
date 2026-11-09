@@ -116,7 +116,7 @@ Decision (**chain**, default — `final-runner` non-empty, `usage-threshold` = 8
 
 1. Read current-period `actions_linux` `grossQuantity`; if `used < included-minutes * 0.8` → emit **primary** (default included `2000`)
 2. Else read Blacksmith billable minutes via CLI + org token; if under 80% of `blacksmith-included-minutes` (default `3000`) → emit **fallback**
-3. Else → emit **final** (default `jog`). GitHub meter failure skips to Blacksmith; Blacksmith meter missing/failed emits final.
+3. Else → emit **final** (default `jog`). GitHub meter failure/skip emits **final** (Jog) — never Blacksmith — so a dead billing token cannot burn paid minutes while free GHA remains. Blacksmith meter missing/failed also emits final.
 
 Decision (**two-way**, `final-runner: ""`):
 

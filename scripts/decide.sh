@@ -43,7 +43,9 @@ sys.exit(0 if used < included * threshold / 100.0 else 1)
 
 # Pure choice. Prints: primary | fallback | final
 # Args: mode(two-way|chain) gha_used_or_empty gha_included bs_used_or_empty bs_included threshold_pct
-# Empty used means that pool's meter failed or was skipped — treat as exhausted.
+# Two-way: empty gha_used → fallback (treat meter failure as exhausted).
+# Chain: empty gha_used → final (Jog). Do not select Blacksmith unless GHA is
+# known exhausted — a dead billing token with free GHA remaining must not bill.
 choose_runner() {
   local mode="$1"
   local gha_used="${2:-}"
@@ -61,7 +63,12 @@ choose_runner() {
     return 0
   fi
 
-  if [[ -n "$gha_used" ]] && under_headroom "$gha_used" "$gha_included" "$threshold"; then
+  # Chain requires a successful GHA reading before Blacksmith is eligible.
+  if [[ -z "$gha_used" ]]; then
+    printf '%s' final
+    return 0
+  fi
+  if under_headroom "$gha_used" "$gha_included" "$threshold"; then
     printf '%s' primary
     return 0
   fi
